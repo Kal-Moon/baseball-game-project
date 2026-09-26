@@ -16,6 +16,7 @@
 | `docs/research/` | 조사 자료 (구종별 속도 등) |
 | `simulation/baseball_sim.py` | 밸런스 시뮬레이터 (파이썬) |
 | `CHANGELOG.md` | 작업 기록 |
+| `CLAUDE.md` | Claude 작업 안내 (다음에 할 일, 작업 방식) |
 
 ## 시뮬레이터 실행
 
