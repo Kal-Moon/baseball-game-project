@@ -133,12 +133,50 @@ flowchart LR
 
 ### 3.1 조작 방식
 
-**타격: 방향형 (커서 없음)**
+**타격: 방향형 (커서 없음), 스와이프 입력**
 
 - 모바일에서 커서 조작은 어렵고 못하는 유저가 못 칠 가능성이 높아서 방향형을 씀.
-- **스윙 5종**: 레벨, 밀어치기, 당겨치기, 어퍼, 다운. 투구 전에 고르고, 공이 올 때는 탭 한 번 (제안). 기본값은 레벨 스윙.
-- 스윙 선택이 작전이 됨 (예: 3루 주자 → 어퍼로 희생플라이, 1루 주자 → 다운·밀어치기로 병살 회피, 변화구 투수 vs 어퍼스윙).
-- 안 치기(볼 고르기)가 가능해야 함.
+- 판정 방식: **타이밍 + 코스와 스윙의 궁합**. 타이밍이 기본이고, 공의 코스에 맞는 스윙을 고르면 보너스.
+- **스윙 5종**: 레벨, 어퍼, 다운, 당겨치기, 밀어치기. 대각선 스윙은 넣지 않음 (스윙이 너무 많아지고, 대각선으로 그었는데 인식이 다르게 되면 불만이 생김).
+- **입력: 스와이프**. 공이 오는 걸 보고 그 순간 입력해서, 코스에 반응할 수 있음.
+  - 탭 = 레벨, 위 = 어퍼, 아래 = 다운, 좌·우 = **화면상 타구 방향** (우타자는 왼쪽이 당겨치기, 좌타자는 반대).
+  - 타이밍은 손가락이 닿는 순간으로 판정하고, 이어지는 움직임으로 스윙 종류만 읽음 (스와이프 때문에 타이밍이 늦어지지 않게).
+  - 선구 능력치의 체감 효과(공이 크게·느리게 보임)는 코스를 빨리 읽는 데 쓰임.
+- **다운 스윙**: 위에서 눌러 쳐서 뜬공을 줄이고 땅볼·라인드라이브를 늘리는 스윙. 이름은 한국 팬에게 익숙한 "다운 스윙"을 씀.
+- 안 치기(볼 고르기) 가능: 입력이 없으면 스윙하지 않음.
+- 스윙 선택이 작전이 됨 (예: 3루 주자 → 어퍼로 희생플라이, 1루 주자 → 어퍼(뜬공)로 병살 회피, 2루 주자 → 밀어친 쪽 땅볼로 진루타, 변화구 투수 vs 어퍼스윙). 다운 스윙은 땅볼이 늘어서 병살 위험이 오히려 커짐.
+
+**코스와 스윙 궁합** (실제 스윙 데이터 기준: 타자는 낮은 공에 올려 치고 높은 공에 평평하게 치며, 몸쪽은 앞에서 당겨치고 바깥쪽은 깊이 끌어들여 밀어침)
+
+- 스트라이크 존을 **X자로 4구역 + 가운데 원**으로 나눔. 좌타자는 몸쪽·바깥쪽이 반대.
+
+| 구역 | 궁합 스윙 | 반대 스윙 | 반대 스윙일 때 (현실 기준) |
+| --- | --- | --- | --- |
+| 위 (높은 공) | 다운 | 어퍼 | 공 밑을 맞혀 내야 뜬공, 뒤로 가는 파울, 헛스윙 |
+| 아래 (낮은 공) | 어퍼 | 다운 | 공 윗부분을 맞혀 크게 튀는 땅볼 (병살 위험) |
+| 몸쪽 | 당겨치기 | 밀어치기 | 먹힘: 약한 땅볼·빗맞은 뜬공이 가운데~밀어친 쪽으로, 또는 파울 |
+| 바깥쪽 | 밀어치기 | 당겨치기 | 롤오버(손목이 일찍 덮임): 당겨친 쪽 약한 땅볼, 또는 헛스윙 |
+| 가운데 원 | 레벨 | 없음 | 모든 스윙이 무난 |
+
+- 궁합이 맞으면 강한 타구 확률 증가. 반대 스윙이면 약한 타구·파울·헛스윙 증가. 나머지 스윙은 보통 (보너스·패널티 없음).
+- 레벨은 가운데 원에서만 보너스가 있고, 어느 구역에서도 패널티가 없는 안전한 기본값.
+- 경계선 부근의 공은 양쪽 스윙 모두 **절반 보너스** (완전 궁합이 100이면 50). 딱 끊을지 경계에서 멀어질수록 부드럽게 올릴지, 보너스·패널티 크기는 시뮬레이션 후 결정.
+- 어퍼·다운의 좌우 타구 방향은 공의 좌우 코스를 따름 (몸쪽 → 당겨친 쪽, 바깥쪽 → 밀어친 쪽).
+
+**타구 결과**
+
+- 스윙 종류는 **타구 방향**을 정하고, 방향별 결과 분포(땅볼·뜬공 비율, 홈런 비율 등)는 **현실 통계**를 따름. 예: 뜬공 중 홈런 비율은 당겨친 쪽 약 23~37%, 가운데 약 9%, 밀어친 쪽 약 4~5% (MLB).
+- 스윙에 장타형·안타형 성격을 따로 주지 않음. 타구의 크기는 **타자 능력치와 상대 투수 능력치**가 함께 정함.
+
+**타이밍 판정 (7단계)**
+
+| 너무 빠름 | 빠름 | 좋음 | 완벽 | 좋음 | 늦음 | 너무 늦음 |
+| --- | --- | --- | --- | --- | --- | --- |
+
+- **너무 빠름**: 공이 오기 전에 휘두름(헛스윙), 또는 일찍 휘둘렀는데 운 좋게·간신히 맞힌 경우.
+- **너무 늦음**: 공이 포수 미트에 들어간 뒤 휘두름(헛스윙), 또는 늦게 휘둘렀는데 운 좋게·간신히 맞힌 경우.
+- "너무"는 가장 바깥 구간에만 써서, 조금 빠르거나 늦은 스윙을 "매우 빨랐다"고 느끼지 않게 함.
+- 구간별 결과, 구간 폭, 능력치가 폭을 바꾸는 정도는 미정.
 
 **투구: 클래식 / 원 타이밍 중 유저 선택**
 
@@ -259,7 +297,10 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 **경기·조작**
 
 - [ ] 원 타이밍 세부 수치 (제구별 원 크기·속도, 탭 안 했을 때 원 안 확률). 직접 플레이의 볼넷·실투 비율을 자동 계산과 맞추기
-- [ ] 스윙 5종이 결과를 어떻게 바꾸는지, 타격 타이밍 판정
+- [ ] 타이밍 7단계의 구간별 결과, 구간 폭, 능력치가 폭을 바꾸는 정도
+- [ ] 스윙별로 가장 좋은 순간을 옮길지 (당겨치기는 조금 일찍, 밀어치기는 조금 늦게 → 빠른 공은 밀어치기, 느린 변화구는 당겨치기가 유리)
+- [ ] 투수 능력치(구속·구위·변화·제구)가 직접 타격에 주는 효과
+- [ ] 코스 궁합 보너스·패널티 크기, 경계선 처리 (시뮬레이션), 가운데 원(레벨 구역) 크기
 - [ ] 카메라 구도 추가 (여러 구도 제공)
 - [ ] 수비 미니게임 세부 설계, 포지션별 수비 기회 (타구 방향에 따라)
 - [ ] 자동 플레이 보상 비율
@@ -342,6 +383,11 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 - [2024 KBO League season – Wikipedia](https://en.wikipedia.org/wiki/2024_KBO_League_season)
 - [26-man roster – MLB Glossary](https://www.mlb.com/glossary/transactions/26-man-roster)
 - [Statcast – MLB Glossary](https://www.mlb.com/glossary/statcast)
+- [New Statcast metrics measure swing path, attack angle, attack direction – MLB.com](https://www.mlb.com/news/new-statcast-swing-metrics-2025) · [Attack Angle](https://www.mlb.com/glossary/statcast/attack-angle) · [Swing Path (Tilt)](https://www.mlb.com/glossary/statcast/swing-path-tilt) – MLB Glossary
+- [Batted Ball Direction – FanGraphs](https://library.fangraphs.com/offense/batted-ball-direction/) · [Hitting It Where It's Pitched – FanGraphs Community](https://community.fangraphs.com/hitting-it-where-its-pitched/) · [The Physics of the Pop-Up – The Hardball Times](https://tht.fangraphs.com/the-physics-of-the-pop-up/)
+- [The Direction of Home Runs – Lookout Landing](https://www.lookoutlanding.com/2012/11/9/3620530/the-direction-of-home-runs)
+- [낮은 게 투수의 미덕? '하이 패스트볼' 전성시대 – 서울신문](https://www.seoul.co.kr/news/sport/baseball/2022/01/13/20220113026007)
+- [Rollover in Baseball – Dugout Edge](https://www.dugoutedge.com/baseball-terms-dictionary/rollover)
 - [DIPS](https://library.fangraphs.com/principles/dips/) · [BABIP](https://library.fangraphs.com/pitching/babip/) · [Plate Discipline](https://library.fangraphs.com/offense/plate-discipline/) · [Clutch](https://library.fangraphs.com/misc/clutch/) – FanGraphs
 - [The Meatball: Analyzing Middle-Middle Pitches – Sports Info Solutions](https://www.sportsinfosolutions.com/2022/08/24/the-meatball-analyzing-middle-middle-pitches/)
 - [MLB The Show 26 Batting Guide](https://clutchpoints.com/gaming/mlb-the-show-26-batting-guide) · [Pitching Guide](https://clutchpoints.com/gaming/mlb-the-show-26-pitching-guide-best-interfaces-pitch-types) – ClutchPoints
