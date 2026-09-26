@@ -13,6 +13,7 @@
 | `docs/game-design.md` | 기획 문서 (큰 틀, 첫 버전 범위, 시뮬레이션 결과, 보류 목록, 참고 자료) |
 | `docs/dev-machine-spec.md` | 개발 PC 사양과 개발 가능 범위 |
 | `docs/mockups/` | 모바일 가로 화면 예시 (임시 그림) |
+| `docs/research/` | 조사 자료 (구종별 속도 등) |
 | `simulation/baseball_sim.py` | 밸런스 시뮬레이터 (파이썬) |
 | `CHANGELOG.md` | 작업 기록 |
 
