@@ -13,7 +13,7 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 | 코드 | 구종 | 우리 게임 |
 | --- | --- | --- |
 | FF | Four-Seam Fastball | 포심 (기본) |
-| SI | Sinker | 투심·싱커로 나눔 (기본) |
+| SI | Sinker | 싱커 (기본, 투심 포함) |
 | FC | Cutter | 커터 (기본) |
 | SL | Slider | 슬라이더 (기본) |
 | ST | Sweeper | 스위퍼 (기본) |
@@ -27,7 +27,7 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 | EP | Eephus | 이퓨스 (특수) |
 | KN | Knuckleball | 넣지 않음 |
 
-- MLB는 투심을 따로 세지 않고 싱커(SI)로, 서클체인지업도 체인지업(CH)으로 셈 ([Daktronics](https://www.daktronics.com/en-us/support/kb/000001823)). 우리 게임은 움직임이 달라서 나눔 (아래 4절).
+- MLB는 투심을 따로 세지 않고 싱커(SI)로, 서클체인지업도 체인지업(CH)으로 셈 ([Daktronics](https://www.daktronics.com/en-us/support/kb/000001823)). 우리 게임은 투심을 싱커에 묶고(KAL, 표기 "싱커"), 서클체인지업은 움직임이 달라서 나눔.
 - 스위퍼(ST)·슬러브(SV)는 2023년 추가된 분류라고 함 ([MLB.com 스위퍼](https://www.mlb.com/glossary/pitch-types/sweeper), [MLB.com 슬러브](https://www.mlb.com/glossary/pitch-types/slurve), 검색 요약. 원문은 접속이 막혀 확인 못 함).
 - 2026-10-05 정정: 처음 정리 때 MLB가 따로 세는 너클커브·슬러브·포크볼을 그 사실을 말하지 않고 합쳤음. 근거를 골라 쓴 잘못이라 다시 나눔.
 
@@ -61,3 +61,15 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 
 - 컴프야: 포심, 체인지업, 슬라이더, 커브, 커터, 스플리터, 포크, 싱커, 투심, 써클체인지업 ([컴프야 커뮤니티](https://cpbv-community.com2us.com/board/11/260070))
 - 파워프로: 변화구를 방향(각도)·변화량·구속·예리함 값으로 정의 (예: H슈트 각도 +90°, SFF 각도 0°) ([Game8](https://kamigame.jp/pawapuro2022/page/208592516688182350.html))
+
+## 5. 포크볼·스플리터 속도와 회전 (2026-10-05 추가)
+
+- NPB 포크볼 평균 약 135km/h, 스플리터 약 138km/h. 패스트볼 대비 스플리터 약 5~12km/h, 포크볼 약 8~18km/h 느림 ([halftime-media](https://halftime-media.com/sports-market/baseball-split/), [baseball-jiten](https://baseball-jiten.com/columns/fork-vs-split/)). 연도 확인 못 함.
+- 홈까지 스플리터 약 20바퀴, 포크볼 약 10바퀴 ([halftime-media](https://halftime-media.com/sports-market/baseball-split/)). MLB 스플리터 평균 1,302rpm, 사사키 519rpm ([MLB Korea](https://www.mlbkor.com/news/articleView.html?idxno=20644)).
+- KAL 자료(출처 표시: mlbkor 등): 포심 2,200~2,500rpm, 슬라이더·커브 2,300~2,800, 스플리터 1,000~1,400, 포크볼 300~600, 너클볼 0~150. 포크볼 수치는 따로 확인 못 함.
+- 처음 초안에서 포크볼 비율을 0.87로 너무 느리게 잡았다가 0.91로 고침 (KAL 지적: 포크볼은 그렇게 느린 공이 아님).
+
+## 6. 구종별 평균 구속·무브먼트
+
+- 2025 MLB 평균 구속: 포심 94.0, 커터 89.4, 스플리터 86.4, 체인지업 85.9, 슬라이더 84.8, 커브 80.5mph ([RotoWire](https://www.rotowire.com/baseball/article/mlb-pitch-speed-and-usage-2002-to-2025-94262)). 싱커·스위퍼·슬러브·너클커브·포크볼의 2025 평균은 못 찾음.
+- 무브먼트(IVB 기준): [Baseball Scouter](https://baseballscouter.com/vertical-vs-horizontal-pitch-break/), [Optimum Athletes](https://www.optimumathletes.com/blog/pitch-metrics-horizontal-and-vertical-break). 같은 검색에 기준이 다른 표가 섞여 나와 그 표는 쓰지 않음.
