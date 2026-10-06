@@ -82,3 +82,4 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 - 다른 게임:
   - MLB The Show (Road to the Show): 처음엔 패스트볼·체인지업·커브 같은 기본 구성. 쉬는 날 불펜 훈련에서 **랜덤으로 나온 구종 중 하나로 한 번에 하나씩 바꿈** ([Gamepur](https://www.gamepur.com/guides/mlbts21-how-to-change-your-pitch-repertoire-in-rtts), [AppTrigger](https://apptrigger.com/2021/04/24/mlb-the-show-21-pitches-rtts/)).
   - 파워프로: 스트레이트는 모두 던지고, 변화구는 방향별로 하나(10편부터 한 방향만 둘). 석세스 이벤트를 끝까지 하면 오리지널 변화구 ([나무위키 파워프로 구종](https://namu.wiki/w/%ED%8C%8C%EC%9B%8C%ED%92%80%20%ED%94%84%EB%A1%9C%EC%95%BC%EA%B5%AC/%EA%B5%AC%EC%A2%85), 검색 요약).
+- 선발 ↔ 불펜 (보직 개념용): 선발에서 불펜으로 옮긴 투수는 구속이 평균 약 0.6~1.2mph 오름 (2008~2018) ([FanGraphs](https://blogs.fangraphs.com/further-adventures-in-starting-vs-relieving/), 검색 요약). 최근에는 선발 평균 93.8mph, 불펜 93.9mph로 차이가 거의 없음 ([FanGraphs](https://blogs.fangraphs.com/breaking-down-baseballs-early-velocity-surge/), 검색 요약, **몇 년도인지 확인 못 함**).
