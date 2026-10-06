@@ -42,7 +42,7 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 | 구종 | 내용 | 출처 |
 | --- | --- | --- |
 | 투심·싱커 | 옆으로 휘는 쪽을 투심, 아래로 가라앉는 쪽을 싱커라 부르는 경향. 같은 뜻으로도 씀. 국내 대표 싱커 투수 정대현 | [many-information](https://many-information.com/baseball-sinker-two-seam-grip-movement-guide/) |
-| 슈트 | 던지는 팔 쪽으로 강하게 파고드는 패스트볼 변형 (일본) | [Wikibooks](https://ja.wikibooks.org/wiki/%E9%87%8E%E7%90%83/%E5%A4%89%E5%8C%96%E7%90%83/%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%88) |
+| 슈트 | 던지는 팔 쪽으로 강하게 파고드는 패스트볼 변형 (일본). **2026-10-06 구종 목록에서 뺌** (KAL: 논란이 있는 공) | [Wikibooks](https://ja.wikibooks.org/wiki/%E9%87%8E%E7%90%83/%E5%A4%89%E5%8C%96%E7%90%83/%E3%82%B7%E3%83%A5%E3%83%BC%E3%83%88) |
 | 스플링커 | 스플리터 그립으로 세게 던져 싱커처럼 팔 쪽으로 휘며 떨어짐. 조안 듀란 약 96~97mph, 약 25~26인치 낙차, 팔 쪽 13~17인치. Statcast는 스플리터 → 싱커로 분류 (따로 분류 없음) | [MLB.com](https://www.mlb.com/news/jhoan-duran-on-his-unique-splinker-pitch), [Boston Globe](https://www.bostonglobe.com/2022/09/03/sports/twins-jhoan-duran-is-fast-becoming-concern-major-league-hitters/) |
 | 고속 슬라이더(슬러터) | 보통 슬라이더보다 빠르고 덜 휨 (마쓰자카). 슬러터는 커터와 슬라이더 사이 | [rere.jp](https://www.rere.jp/358169/), [나무위키](https://namu.wiki/w/%EC%95%BC%EA%B5%AC%EC%9D%98%20%EA%B5%AC%EC%A2%85) |
 | 종슬라이더 | 아래로 떨어지는 슬라이더 (마쓰자카, 이마이). 포크보다 미끄러지듯 떨어짐 | [rere.jp](https://www.rere.jp/358169/) |
