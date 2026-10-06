@@ -87,6 +87,20 @@
 
 싱커, 투심, 서클체인지업, 포크볼(스플리터와 구분), 스위퍼, 너클커브 등은 **투수 구종 설계** 때 이 자료를 참고해서 다룸.
 
+## 6. 투수마다 비율이 다른가, 바뀌는가 (③ 속도 비율 랜덤용, 2026-10-06)
+
+Baseball Savant는 2026-10-06에도 막혀 있어서(투수별 구종 평균 CSV를 못 받음) **투수별 비율의 분포(표준편차·백분위)는 확인 못 함**. 아래는 기사·검색 요약.
+
+- 2025 MLB 평균 차이: 포심 94.0 − 체인지업 85.9 = 약 8.1mph ([RotoWire](https://www.rotowire.com/baseball/article/mlb-pitch-speed-and-usage-2002-to-2025-94262)). 체인지업이 패스트볼보다 더 빨리 빨라져서 차이가 줄어드는 추세 (같은 자료).
+- 투수마다 차이가 큼: 펠릭스 에르난데스는 체인지업 차이가 5mph 미만(2009년 이후 매년), 15mph 차이를 두는 투수도 있음 ([FanGraphs](https://blogs.fangraphs.com/how-felix-hernandez-redefined-the-modern-changeup/), 검색 요약).
+- 차이가 크면 헛스윙, 작으면 땅볼이 많다는 분석 ([Bleacher Report](https://bleacherreport.com/articles/1680808-what-sets-an-elite-changeup-apart-from-the-rest-of-the-pack), 검색 요약, 원문 접속 못 함).
+- **비율은 바뀔 수 있음**:
+  - 페드로 마르티네스: 말년에 포심이 느려지자 체인지업도 느리게 던져 차이를 유지 ([Boston Globe](https://apps.bostonglobe.com/graphics/2015/07/pedro/), 검색 요약).
+  - 루카스 지올리토(2024 봄): 슬라이더가 "너무 느리고 커브 같아져서" 그립을 바꿔 더 빠르게 (전년 평균 84mph → 80마일대 중후반 목표) ([Boston Globe](https://www.bostonglobe.com/2024/02/25/sports/red-sox-lucas-giolito/), 검색 요약).
+  - 캠 슐리틀러(2025): 한 시즌 안에 커브가 약 2.5mph 빨라지고 헛스윙률 37% → 47% ([MLB.com](https://www.mlb.com/news/cam-schlittler-90-mph-curveball), 검색 요약).
+  - 제이콥 미시오로스키: 슬라이더 평균 약 94mph, 포심 약 100mph → 비율 약 0.94 (디그롬과 같은 수준, 검색 요약).
+- 대신 받을 수 있는 원자료 후보: Kaggle "MLB Pitcher Arsenal (2020-2026)"(Savant에서 만든 투수×시즌×구종 평균 구속). Kaggle도 막혀 있음. 생성 코드만 [GitHub](https://github.com/yasumorishima/kaggle-datasets)에 있고 CSV는 없음.
+
 ## 출처
 
 - [MLB Pitch Speed & Usage Trends: 2002-2025 – RotoWire](https://www.rotowire.com/baseball/article/mlb-pitch-speed-and-usage-2002-to-2025-94262)
