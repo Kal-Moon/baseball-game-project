@@ -73,3 +73,12 @@ MLB 홈페이지 Pitch Types 목록 (KAL 스크린샷으로 확인): **14가지*
 
 - 2025 MLB 평균 구속: 포심 94.0, 커터 89.4, 스플리터 86.4, 체인지업 85.9, 슬라이더 84.8, 커브 80.5mph ([RotoWire](https://www.rotowire.com/baseball/article/mlb-pitch-speed-and-usage-2002-to-2025-94262)). 싱커·스위퍼·슬러브·너클커브·포크볼의 2025 평균은 못 찾음.
 - 무브먼트(IVB 기준): [Baseball Scouter](https://baseballscouter.com/vertical-vs-horizontal-pitch-break/), [Optimum Athletes](https://www.optimumathletes.com/blog/pitch-metrics-horizontal-and-vertical-break). 같은 검색에 기준이 다른 표가 섞여 나와 그 표는 쓰지 않음.
+
+## 7. 처음 구종 수·구종 얻는 방법 (④용, 2026-10-06)
+
+- MLB 규정이닝 선발의 평균 구종 수 **4.47개**. 5개, 6개 이상 던지는 투수가 Statcast 기록(10여 년) 중 가장 많음. 6개 구종: 스킨스, 휠러, 프리드, 야마모토, 슈웰렌바흐, 이볼디, 그레이 ([MLB.com](https://www.mlb.com/news/mlb-pitch-arsenals-are-bigger-than-ever-in-2025), 2025, 검색 요약). 불펜 평균 구종 수는 확인 못 함 (선발보다 적다는 설명만 있음).
+- 같은 MLB.com 기사는 Statcast 14개 구종에 **슬로우 커브**를 넣고 이퓨스는 빼서 셈 (검색 요약). 1절 목록(KAL 스크린샷)은 이퓨스가 있고 슬로우 커브가 없음. 두 목록이 다르고 원문을 확인하지 못함.
+- KBO: 선발은 3~4개 이상, 보통 4개를 갖추려고 함 ([나무위키 선발 투수](https://namu.wiki/w/%EC%84%A0%EB%B0%9C%20%ED%88%AC%EC%88%98), 검색 요약). 통계 수치는 못 찾음.
+- 다른 게임:
+  - MLB The Show (Road to the Show): 처음엔 패스트볼·체인지업·커브 같은 기본 구성. 쉬는 날 불펜 훈련에서 **랜덤으로 나온 구종 중 하나로 한 번에 하나씩 바꿈** ([Gamepur](https://www.gamepur.com/guides/mlbts21-how-to-change-your-pitch-repertoire-in-rtts), [AppTrigger](https://apptrigger.com/2021/04/24/mlb-the-show-21-pitches-rtts/)).
+  - 파워프로: 스트레이트는 모두 던지고, 변화구는 방향별로 하나(10편부터 한 방향만 둘). 석세스 이벤트를 끝까지 하면 오리지널 변화구 ([나무위키 파워프로 구종](https://namu.wiki/w/%ED%8C%8C%EC%9B%8C%ED%92%80%20%ED%94%84%EB%A1%9C%EC%95%BC%EA%B5%AC/%EA%B5%AC%EC%A2%85), 검색 요약).
