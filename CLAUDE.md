@@ -52,4 +52,9 @@
 
 ## 환경 참고
 
-- 클라우드 환경의 네트워크 설정에서 `mlb.com`(Baseball Savant 포함), `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`와 일부 일본 야구 데이터 사이트가 막혀 있다. 웹 검색은 된다. 자세한 수치가 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
+- 클라우드 환경 네트워크는 "사용자 지정"이고, 허용 도메인 목록에 있는 곳만 열린다 (2026-10-06 접속 확인).
+  - **열림**: `baseballsavant.mlb.com`(CSV 내려받기 됨), `npb.jp`, `japanbaseballlab.com`, `1point02.jp`, `tokyudx.com`, `nf3.sakura.ne.jp`, `baseball.yahoo.co.jp`(첫 화면은 막힌 주소로 넘어가지만 `/npb/` 기록 페이지는 됨), `www.koreabaseball.com`, `www.statiz.co.kr`
+  - **허용했지만 응답 없음**(502, 사이트 쪽 문제로 보임): `baseball-lab.jp`, `npbscholar.com`
+  - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
+  - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
+- Savant 투수별 구종 평균 구속 받는 법: `https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=<구종코드>%7C&hfGT=R%7C&hfSea=<연도>%7C&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&chk_stats_velocity=on` (구종코드 FF·SI·FC·SL·ST·CU·KC·SV·CS·FS·FO·CH·SC·EP, 열 `pitches`·`velocity`)
