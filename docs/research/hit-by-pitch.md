@@ -12,14 +12,16 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | MLB | 2024 정규시즌 | 182,073 | 14,890 | 2,012 | **1.11%** | 0.135 (약 1/7) | 약 0.83 |
 | MLB | 2025 정규시즌 | 182,283 | 15,332 | 1,910 | **1.05%** | 0.125 (약 1/8) | 약 0.79 |
+| KBO | 2024 정규시즌 | 57,265 | 5,265 | 783 | **1.37%** | 0.149 | 약 1.09 |
+| KBO | 2025 정규시즌 | 55,996 | 5,123 | 806 | **1.44%** | 0.157 | 약 1.12 |
 | KBO | 2026 정규시즌 (10월 8일 기준, 팀 합계 1,414경기 = 약 707경기) | 55,869 | 5,241 | 820 | **1.47%** | 0.156 (약 1/6) | 약 1.16 |
 
 - MLB: Baseball Savant 커스텀 리더보드 CSV (투수 기준, `pa`·`p_walk`·`p_hit_by_pitch`)
   `https://baseballsavant.mlb.com/leaderboard/custom?year=<연도>&type=pitcher&min=0&selections=pa,p_walk,p_hit_by_pitch&csv=true`
   경기당 값은 정규시즌 2,430경기로 나눔.
-- KBO: [KBO 기록실 팀 타자 기록](https://www.koreabaseball.com/Record/Team/Hitter/Basic2.aspx) (HBP·BB), [기본 기록](https://www.koreabaseball.com/Record/Team/Hitter/Basic1.aspx) (PA). 시즌 막바지 집계라 최종값과 조금 다를 수 있음. 2025 KBO 전체 값은 확인 못 함 (기록실이 연도 선택을 페이지 안 동작으로만 바꿈).
+- KBO: [KBO 기록실 팀 타자 기록](https://www.koreabaseball.com/Record/Team/Hitter/Basic2.aspx) (HBP·BB), [기본 기록](https://www.koreabaseball.com/Record/Team/Hitter/Basic1.aspx) (PA). 2024·2025는 연도를 바꿔 받음 (각 720경기). 2026은 시즌 막바지 집계라 최종값과 조금 다를 수 있음.
 - KBO 팀별 사구 (2026, 같은 표): NC 112, LG 101, 키움 100, 삼성 85 … 롯데 46. 팀마다 2배 넘게 차이 남.
-- 정리: **타석 100번에 1~1.5번, 볼넷의 1/6~1/8.** 한국이 MLB보다 약 1.4배 많음.
+- 정리: **타석 100번에 1~1.5번, 볼넷의 1/6~1/8.** 한국이 MLB보다 약 1.4배 많고, 2024 → 2026 조금씩 늘어남.
 
 ## 2. 투수 제구(볼넷)와 관계가 있나 — MLB 2024·2025 직접 계산
 
