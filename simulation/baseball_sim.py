@@ -211,7 +211,8 @@ def advance(bases, result, b: Batter, rng=random):
     return bases, 0
 
 
-def half_inning(bat_team: Team, pit_team: Team, state, stats, rng=random):
+def half_inning(bat_team: Team, pit_team: Team, state, stats, rng=random, pa=None):
+    pa = pa or plate_appearance
     outs, runs = 0, 0
     bases = [None, None, None]
     defense = pit_team.defense()
@@ -219,7 +220,7 @@ def half_inning(bat_team: Team, pit_team: Team, state, stats, rng=random):
         pitcher = current_pitcher(pit_team, state)
         batter = bat_team.lineup[state["order"][bat_team.name] % 9]
         state["order"][bat_team.name] += 1
-        res = plate_appearance(batter, pitcher, defense, rng)
+        res = pa(batter, pitcher, defense, rng)
         stats[res] = stats.get(res, 0) + 1
         stats["PA"] = stats.get("PA", 0) + 1
         if res == "K":
@@ -250,7 +251,7 @@ def current_pitcher(team: Team, state):
     return p
 
 
-def play_game(home: Team, away: Team, rng=random, stats=None):
+def play_game(home: Team, away: Team, rng=random, stats=None, pa=None):
     stats = stats if stats is not None else {}
     for t in (home, away):
         for pp in t.rotation + t.bullpen:
@@ -264,11 +265,11 @@ def play_game(home: Team, away: Team, rng=random, stats=None):
     inning = 0
     while True:
         inning += 1
-        score[away.name] += half_inning(away, home, state, stats, rng)
+        score[away.name] += half_inning(away, home, state, stats, rng, pa)
         used.add(id(state["pitcher"][home.name]))
         if inning >= 9 and score[home.name] > score[away.name]:
             break
-        score[home.name] += half_inning(home, away, state, stats, rng)
+        score[home.name] += half_inning(home, away, state, stats, rng, pa)
         used.add(id(state["pitcher"][away.name]))
         if inning >= 9 and score[home.name] != score[away.name]:
             break
@@ -291,7 +292,8 @@ def play_game(home: Team, away: Team, rng=random, stats=None):
     return h, a
 
 
-def play_season(teams, games_vs_each=16, rng=random, stats=None):
+def play_season(teams, games_vs_each=16, rng=random, stats=None, pa=None):
+    """pa: 타석 계산 함수 (기본은 v1 plate_appearance, v2는 공 하나씩 계산하는 함수를 넘김)"""
     for t in teams:
         t.wins = t.losses = t.ties = 0
     schedule = []
@@ -301,7 +303,7 @@ def play_season(teams, games_vs_each=16, rng=random, stats=None):
                 schedule.append((teams[i], teams[j]) if g % 2 == 0 else (teams[j], teams[i]))
     rng.shuffle(schedule)
     for home, away in schedule:
-        play_game(home, away, rng, stats)
+        play_game(home, away, rng, stats, pa)
     return sorted(teams, key=lambda t: t.wins / max(t.wins + t.losses, 1), reverse=True)
 
 
