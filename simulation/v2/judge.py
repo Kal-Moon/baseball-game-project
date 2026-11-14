@@ -8,7 +8,9 @@ TIMING_SCORE = {"완벽": 1.0, "좋음": 0.6, "빠름": 0.0, "늦음": 0.0, "너
 def quality(batter, pitcher, t_grade, comp, x, z, with_acc=True):
     """품질: 타이밍 + 궁합 + (정확 − 변화) − 존 밖 거리.
     with_acc=False: 타구 속도용. 정확은 "빗나간 스윙을 덜 나쁘게"(맞힘·페어)라 타구 속도에는 넣지 않음 (4단계, 2026-11-14)."""
-    acc = P["k_acc"] * (batter.con - pitcher.brk) / 10 * SCALE if with_acc else 0.0
+    gap = (batter.con - pitcher.brk) / 10 * SCALE
+    # 양수·음수 쪽 계수를 따로, 음수 쪽(변화 > 정확)을 더 작게 (6장 보류 목록 "정확의 계수와 상한")
+    acc = (P["k_acc"] if gap > 0 else P["k_acc_neg"]) * gap if with_acc else 0.0
     return (TIMING_SCORE[t_grade]
             + P["compat"] * comp
             + acc

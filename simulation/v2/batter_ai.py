@@ -25,6 +25,8 @@ def decide_swing(batter, pitcher, pitch, x, z, count, rng):
         p = inv_logit(P["swing_in"] + adj)
     else:
         eye_gap = (batter.eye - pitcher.vel) / 10 * SCALE
+        if eye_gap < 0:  # 음수 쪽(구속 > 선구)은 작게: 직접 플레이 느려짐 10% : 빨라짐 5% (3.1절 선구 세부)
+            eye_gap *= P["eye_neg_ratio"]
         p = inv_logit(P["swing_out"] + adj + CHASE_ADJ[pitch.name]
                       - P["k_eye_chase"] * eye_gap - P["chase_dist"] * d)
     return rng.random() < p
@@ -36,8 +38,10 @@ def timing(batter, pitcher, pitch, count, rng):
     expect = 1.0 if guess_fb else P["off_expect"]
     # 예상보다 느린 공(ratio 작음)이 오면 빨리 휘두름 → 음수
     shift = -(expect - pitch.ratio) / 0.10 * P["t_shift"] * P["t_adjust"]
-    sd = P["t_sd"] * math.exp(P["k_vel_t"] * (pitcher.vel - 50) / 10 * SCALE
-                              - P["k_eye_t"] * (batter.eye - pitcher.vel) / 10 * SCALE)
+    eg = (batter.eye - pitcher.vel) / 10 * SCALE
+    if eg < 0:
+        eg *= P["eye_neg_ratio"]
+    sd = P["t_sd"] * math.exp(P["k_vel_t"] * (pitcher.vel - 50) / 10 * SCALE - P["k_eye_t"] * eg)
     return rng.gauss(shift, sd)
 
 
