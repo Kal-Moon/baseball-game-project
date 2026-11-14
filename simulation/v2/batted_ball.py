@@ -37,6 +37,8 @@ def result(batter, pitcher, fielder_dfn, ev, la, direction, rng):
     _, s1, s2, s3, hr = lookup(ev, la, direction)
     k = P["hit_mult"] * (1 - P["k_dfn"] * (fielder_dfn - 50) / 10 * SCALE)
     s1, s2, s3 = s1 * k, s2 * k, s3 * k
+    if la < 10:  # 땅볼 단타(내야안타 포함)는 (주루 − 수비) 영향 (3.1절 주루)
+        s1 *= 1 + P["k_spd"] * (batter.spd - fielder_dfn) / 10 * SCALE
     r = rng.random()
     for name, p in (("홈런", hr), ("3루타", s3), ("2루타", s2), ("단타", s1)):
         if r < p:

@@ -54,7 +54,8 @@ def plate_appearance(batter, pitcher, fielder_dfn, rng, log=None, wp_cb=None):
             if strikes < 2:
                 strikes += 1
         else:
-            ev, la, d = bb.make_ball(batter, pitcher, q, stype, x, z, t, rng)
+            q_ev = jd.quality(batter, pitcher, tg, comp, x, z, with_acc=False)
+            ev, la, d = bb.make_ball(batter, pitcher, q_ev, stype, x, z, t, rng)
             if log is not None:
                 log["ev"] += ev
                 log["la"] += la
