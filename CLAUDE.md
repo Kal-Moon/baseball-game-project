@@ -13,7 +13,7 @@
 | 파일 | 내용 |
 | --- | --- |
 | `docs/game-design.md` | 기획 문서. 결정된 내용과 **6장 보류 목록**(아직 정할 것) |
-| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류, `hit-by-pitch.md` 사구, `league-averages.md` KBO 리그 평균, `pitch-level.md` 공 단위 비율) |
+| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류, `hit-by-pitch.md` 사구, `league-averages.md` KBO 리그 평균, `pitch-level.md` 공 단위 비율, `batted-balls.md` 타구 결과) |
 | `CHANGELOG.md` | 날짜별 작업 기록과 다음 작업 |
 | `simulation/baseball_sim.py` | 밸런스 시뮬레이터 v1 (파이썬, 외부 라이브러리 없음) |
 
