@@ -13,10 +13,12 @@ def quality(batter, pitcher, t_grade, comp, x, z):
             - P["out_pen"] * out_dist(x, z))
 
 
-def judge(q, t_grade, rng):
-    """맞힘 → 페어/파울. 너무 빠름·너무 늦음은 거의 헛스윙이고 맞아도 대부분 파울."""
+def judge(q, t_grade, rng, strikes=0):
+    """맞힘 → 페어/파울. 너무 빠름·너무 늦음은 거의 헛스윙이고 맞아도 대부분 파울.
+    2스트라이크 뒤에는 커트(일부러 파울)가 늘어남 (1단계 결정, 2026-11-14)."""
     if rng.random() >= inv_logit(P["c0"] + P["c_q"] * q):
         return "헛스윙"
-    if rng.random() < inv_logit(P["f0"] + P["f_q"] * q):
+    cut = P["two_strike_cut"] if strikes == 2 else 0.0
+    if rng.random() < inv_logit(P["f0"] + P["f_q"] * q - cut):
         return "인플레이"
     return "파울"

@@ -23,6 +23,7 @@ KNOBS = {  # 이름: 한 번에 움직이는 폭
     "out_pen": 0.02, "f0": 0.1, "ev0": 1.0, "la0": 1.5, "body_x": 0.5, "dir_bias": 0.1,
     "mistake": 0.004, "c_q": 0.1,
     "la_sd": 1.5, "ev_sd": 1.0, "f_q": 0.1, "t_sd": 0.1, "dir_x": 0.1,
+    "two_strike_cut": 0.1, "hit_mult": 0.01,
 }
 
 

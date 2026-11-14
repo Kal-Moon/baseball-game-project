@@ -35,6 +35,7 @@ class Pitcher:
     sta: float = 95    # 체력 (투구 수 한계)
     pitches: list = field(default_factory=list)
     pitches_today: int = 0
+    rest_until: int = 0  # 불펜: 이 날부터 다시 던질 수 있음
 
 
 def _pick(weights, rng):

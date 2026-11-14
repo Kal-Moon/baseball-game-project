@@ -27,7 +27,7 @@ def run(n=40000, seed=1, params=None):
     for i in range(n):
         p = pitchers[i % len(pitchers)]
         p.pitches_today = 0
-        res[plate_appearance(batter, p, 50, rng, log)] += 1
+        res[plate_appearance(batter, p, 50, rng, log)[0]] += 1
     return stats(res, log, n)
 
 
