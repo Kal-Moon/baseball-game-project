@@ -14,7 +14,9 @@ def _la_bin(a):
 def make_ball(batter, pitcher, q, swing, x, z, t, rng):
     ev = (P["ev0"] + P["ev_q"] * q + P["k_pow_ev"] * (batter.pow - pitcher.stuff) / 10 * SCALE
           + rng.gauss(0, P["ev_sd"]))
-    la = P["la0"] + P["la_swing"][swing] + P["la_h"] * (z / ZZ) + rng.gauss(0, P["la_sd"])
+    # 변화 = 장타 억제형(땅볼 유도, 2.3절 역할): 변화가 높을수록 맞은 공의 각도가 낮아짐 (4단계 시험)
+    la = (P["la0"] + P["la_swing"][swing] + P["la_h"] * (z / ZZ) - P["k_brk_la"] * (pitcher.brk - 50) / 10 * SCALE
+          + rng.gauss(0, P["la_sd"]))
     sw = P["dir_swing"] if swing == "당겨치기" else (-P["dir_swing"] if swing == "밀어치기" else 0.0)
     score = P["dir_bias"] + sw + P["dir_x"] * (-x / ZX) + P["dir_t"] * (-t) + rng.gauss(0, P["dir_sd"])
     direction = 0 if score > P["dir_cut"] else (2 if score < -P["dir_cut"] else 1)
