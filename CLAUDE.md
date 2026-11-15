@@ -62,5 +62,6 @@
   - **열림**: `baseballsavant.mlb.com`(CSV 내려받기 됨), `npb.jp`, `japanbaseballlab.com`, `1point02.jp`, `tokyudx.com`, `nf3.sakura.ne.jp`, `baseball.yahoo.co.jp`(첫 화면은 막힌 주소로 넘어가지만 `/npb/` 기록 페이지는 됨), `www.koreabaseball.com`, `www.statiz.co.kr`
   - **허용했지만 응답 없음**(502, 사이트 쪽 문제로 보임): `baseball-lab.jp`, `npbscholar.com`
   - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
+  - `datalab.naver.com`: 2026-11-15 허용 목록에 추가했지만 그 세션에서는 15분 넘게 403으로 막힘 → **새 세션에서 다시 확인**. 구단 주·부 스타일을 정할 대표 선수 검색량 비교용 (2.1절)
   - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
 - Savant 투수별 구종 평균 구속 받는 법: `https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=<구종코드>%7C&hfGT=R%7C&hfSea=<연도>%7C&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&chk_stats_velocity=on` (구종코드 FF·SI·FC·SL·ST·CU·KC·SV·CS·FS·FO·CH·SC·EP, 열 `pitches`·`velocity`)
