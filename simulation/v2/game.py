@@ -154,9 +154,34 @@ class HalfInning:
             if b[1] and not b[2] and r.random() < P["fly_r2_adv"]:
                 b[2], b[1] = b[1], None
 
+    def try_steal(self):
+        """2루 도루만 (첫 v2). 시간 싸움(3.1절): 성공률 = 리그 평균 + (주루 − 포수 송구), 상한·하한.
+        AI는 성공률이 기준 이상일 때만, 주루가 높을수록 자주 시도."""
+        b, r = self.bases, self.rng
+        if not b[0] or b[1] or self.outs == 2:
+            return
+        runner = b[0]
+        catcher = self.fld.lineup[0]
+        gap = (runner.spd - catcher.arm) / 10 * SCALE
+        p_succ = min(P["sb_cap"], max(0.3, P["sb_base"] + P["k_sb"] * gap))
+        if p_succ < P["sb_min_try"]:
+            return
+        if r.random() >= P["sb_try"] * (1 + P["k_sb_try"] * gap):
+            return
+        self.st["SBA"] += 1
+        if r.random() < p_succ:
+            self.st["SB"] += 1
+            self.bases = [None, runner, b[2]]
+        else:
+            self.bases = [None, None, b[2]]
+            self.outs += 1
+
     def play(self, order_idx, walkoff_need=None):
         """이닝 진행. order_idx: 타순 시작. 끝내기면 walkoff_need 점에 닿을 때 끝."""
         while self.outs < 3:
+            self.try_steal()
+            if self.outs >= 3:
+                break
             batter = self.bat.lineup[order_idx % 9]
             order_idx += 1
             pitcher = self.get_p(self)
@@ -285,6 +310,7 @@ def league_stats(teams):
         "사구": s["HBP"] / pa, "홈런": s["HR"] / pa, "BABIP": (h - s["HR"]) / (ab - s["SO"] - s["HR"] + s["SF"]),
         "2루타/안타": s["2B"] / h, "팀당 득점": s["R"] / s["G"], "병살/경기": s["GIDP"] / s["G"],
         "폭투·포일/경기": s["WP"] / s["G"], "실책/경기": s["E"] / s["G"],
+        "도루 시도/경기": s["SBA"] / s["G"], "도루 성공률": s["SB"] / max(1, s["SBA"]),
     }
 
 

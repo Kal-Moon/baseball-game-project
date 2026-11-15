@@ -64,8 +64,13 @@ def choose_target(pitch, count, rng):
 
 
 def fatigue_mult(pitcher):
+    """⑤-5: 노랑(70%)부터 원이 커져 한계(100%)에서 1.15배, 한계를 넘으면 최대 1.3배 ★."""
     ratio = pitcher.pitches_today / max(pitcher.sta, 1)
-    return 1.0 if ratio < 0.9 else min(1.3, 1.0 + (ratio - 0.9) * 1.5)  # ★ 체력 효과 수치 (보류 목록)
+    if ratio < 0.7:
+        return 1.0
+    if ratio < 1.0:
+        return 1.0 + (ratio - 0.7) * 0.5
+    return min(1.3, 1.15 + (ratio - 1.0) * 0.75)
 
 
 def locate(pitcher, pitch, target, rng):
