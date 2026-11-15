@@ -18,6 +18,7 @@ GOALS = {  # 목표, 허용 폭, 무게
 KNOBS = {
     "aim_shift": 0.02, "swing_in": 0.1, "swing_out": 0.1, "c0": 0.1, "f0": 0.1, "ev0": 0.5,
     "la0": 1.0, "body_x": 0.5, "hit_mult": 0.01, "two_strike_cut": 0.1, "adv_1b_r2_home": 0.05,
+    "c_q": 0.1, "t_sd": 0.1,
 }
 
 
