@@ -46,7 +46,8 @@ def timing(batter, pitcher, pitch, count, rng):
 
 
 def timing_grade(t):
-    a = abs(t)
+    """구간 폭: 완벽 ±0.5, 좋음 ±1.5, 빠름·늦음 ±2.5 (구간 단위) × t_win."""
+    a = abs(t) / P["t_win"]
     if a < 0.5:
         return "완벽"
     if a < 1.5:
