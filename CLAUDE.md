@@ -13,7 +13,7 @@
 | 파일 | 내용 |
 | --- | --- |
 | `docs/game-design.md` | 기획 문서. 결정된 내용과 **6장 보류 목록**(아직 정할 것) |
-| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류) |
+| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류, `baseball-games-naver.md` 야구 게임 네이버 검색 추이·카페·블로그 평가) |
 | `CHANGELOG.md` | 날짜별 작업 기록과 다음 작업 |
 | `simulation/baseball_sim.py` | 밸런스 시뮬레이터 v1 (파이썬, 외부 라이브러리 없음) |
 
@@ -61,9 +61,12 @@
   - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
   - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
 - **네이버 데이터랩(검색어 트렌드) API 규칙** (KAL, 2026-11-16)
+  - 지금 요금은 "한시적 무료"가 섞여 있고 바뀔 수 있다. **날짜가 바뀌면(새날 첫 호출 전) 반드시 다시 확인**하고, 무료 범위까지만 돌린다 (KAL, 2026-11-16).
   - 부를 때마다 **먼저 요금 페이지를 열어 무료 범위를 확인**한다: https://www.ncloud.com/product/applicationService/naverApiHub#pricing . 페이지를 못 열면 호출하지 않는다.
   - **기본 무료 구간 안에서만** 호출한다. 2026-11-16 확인 기준: 검색어 트렌드·쇼핑 인사이트는 0~30,000건 무료(30,001~50,000건은 "유료 구간이지만 한시적 무료"라서 쓰지 않음), 검색 API는 0~775,000건 무료에 하루 최대 25,000건. 이용량은 API 호출 횟수로 셈. 집계 기간(월 단위인지)은 페이지에 적혀 있지 않아 확인 못 함.
   - 무료 범위를 넘을 것 같으면 멈추고 KAL에게 먼저 묻는다. 호출 몇 번을 썼는지 말해 준다.
   - 서비스는 NAVER API HUB(네이버 클라우드). 주소 `https://naverapihub.apigw.ntruss.com/search-trend/v1/search`(POST), 헤더 `X-NCP-APIGW-API-KEY-ID`·`X-NCP-APIGW-API-KEY`. 설명서: https://api.ncloud-docs.com/docs/naver-api-hub-search-trend . 예전 `openapi.naver.com` 데이터랩은 2026년 7월 종료 안내가 있음.
+  - 검색 API(카페글·블로그·뉴스·지식iN·웹문서): `GET https://naverapihub.apigw.ntruss.com/search/v1/<cafearticle|blog|news|kin|webkr>?query=..&display=1~100&start=1~1000&sort=sim|date`. 제목·요약·링크만 오고 본문은 없음 (블로그·카페 본문 페이지는 이 환경에서 막힘). 카페글은 날짜가 안 옴.
+  - 검색어 트렌드는 검색어가 다른 뜻과 겹치면 크게 부풀려진다 (예: "마구마구", "이사만루"(2사 만루), "더쇼"(음악 방송)). 게임 이름이 분명한 검색어로 묶는다.
   - 키는 채팅에 받지 않는다 (환경의 네트워크 비밀 값으로 넣음).
 - Savant 투수별 구종 평균 구속 받는 법: `https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=<구종코드>%7C&hfGT=R%7C&hfSea=<연도>%7C&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&chk_stats_velocity=on` (구종코드 FF·SI·FC·SL·ST·CU·KC·SV·CS·FS·FO·CH·SC·EP, 열 `pitches`·`velocity`)
