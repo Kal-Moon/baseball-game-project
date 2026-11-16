@@ -41,11 +41,11 @@ P = {
     "body_x": -2.13,         # 이보다 몸쪽이면 사구 (타자 몸 영역)
     # 스윙 결과: 타이밍별 [헛스윙, 파울, 약한, 보통, 강한 타구] (존 안 공)
     "out_zone_penalty": 0.6, # 존 밖 공은 이 확률로 타이밍이 한 단계 나빠짐
-    "out_zone_whiff": 0.18,  # 존 밖 공은 맞힐 타구가 이 확률로 헛스윙이 됨
+    "out_zone_whiff": 0.24,  # 존 밖 공은 맞힐 타구가 이 확률로 헛스윙이 됨
     # 타구 질 → 결과 [안타 확률, 그중 2루타, 3루타, 홈런 확률(타구 전체 기준)]
     "weak":   (0.12, 0.05, 0.00, 0.000),
-    "normal": (0.355, 0.20, 0.02, 0.010),
-    "strong": (0.62, 0.32, 0.03, 0.125),
+    "normal": (0.362, 0.20, 0.02, 0.011),
+    "strong": (0.62, 0.32, 0.03, 0.140),
 }
 
 GRADES = ["too", "near", "good", "perfect"]
@@ -55,6 +55,25 @@ OUTCOME = {  # [whiff, foul, weak, normal, strong]
     "good":    [0.00, 0.40, 0.14, 0.32, 0.14],
     "perfect": [0.00, 0.22, 0.05, 0.25, 0.48],
 }
+
+
+# 실력 차이 줄이기 (KAL 2026-11-16, B안: 잘함이 보통보다 타율 약 +.040)
+#   타이밍 단계별 결과표를 "보통 유저 평균 결과" 쪽으로 SKILL_BLEND 만큼 당김. 1.0 = 원래 표, 0 = 단계 차이 없음.
+#   완벽이 항상 가장 좋다는 순서는 유지됨 (섞어도 순서가 바뀌지 않음).
+SKILL_BLEND = 0.35
+COMPAT_EFFECT = 0.4   # 코스·스윙 궁합 효과 크기 (1.0 = 원래)
+_BASE_OUTCOME = {k: list(v) for k, v in OUTCOME.items()}
+
+
+def set_blend(blend, compat=None):
+    global SKILL_BLEND, COMPAT_EFFECT
+    SKILL_BLEND = blend
+    if compat is not None:
+        COMPAT_EFFECT = compat
+    w = USERS["보통"].timing
+    avg = [sum(w[g] * _BASE_OUTCOME[g][i] for g in GRADES) for i in range(5)]
+    for g in GRADES:
+        OUTCOME[g] = [blend * a + (1 - blend) * m for a, m in zip(_BASE_OUTCOME[g], avg)]
 
 
 def pick(rng, items, weights):
@@ -100,7 +119,7 @@ def swing_result(rng, user: UserSkill, zone, kind):
     if res in ("weak", "normal", "strong"):
         c = pick(rng, ["good", "mid", "bad"], user.compat)
         order = ["weak", "normal", "strong"]
-        i = order.index(res) + (1 if c == "good" and rng.random() < 0.3 else 0) - (1 if c == "bad" and rng.random() < 0.5 else 0)
+        i = order.index(res) + (1 if c == "good" and rng.random() < 0.3 * COMPAT_EFFECT else 0) - (1 if c == "bad" and rng.random() < 0.5 * COMPAT_EFFECT else 0)
         res = order[max(0, min(2, i))]
     return res
 
@@ -188,6 +207,7 @@ TARGET = {
 }
 
 if __name__ == "__main__":
+    set_blend(SKILL_BLEND, COMPAT_EFFECT)
     rows = {u: run(u) for u in USERS}
     print(f"{'':10s}" + "".join(f"{u:>9s}" for u in rows) + f"{'목표':>9s}")
     for k in TARGET:
