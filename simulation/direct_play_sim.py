@@ -66,7 +66,19 @@ EYE = {"coef": 0.0025, "cap_slow": 0.10, "cap_fast": -0.05, "chase": 2.0, "timin
 
 
 def slowdown(eye_diff):
+    """eye_diff = (선구 − 50) − 구속 무게 × (구속 − 50)  (2026-11-16 구속 확정 뒤)"""
     return max(EYE["cap_fast"], min(EYE["cap_slow"], EYE["coef"] * eye_diff))
+
+
+# 구속 (KAL 2026-11-16 확정: 선구 대결에서는 구속 무게를 작게, 주된 효과는 공 자체가 빨라 타이밍이 늦어짐)
+#   ① 선구 대결: 느려짐 = 0.25% × ((선구 − 50) − eye_w × (구속 − 50))
+#   ② 구속만: 스윙할 때 타이밍이 한 단계 나빠질 확률 = late × (구속 − 50). 상한 구속 +20 ~ −40점.
+VEL = {"eye_w": 0.1, "late": 0.0035, "whiff": 2.0, "cap_pos": 20, "cap_neg": -40, "neg_scale": 1.0}  # 임시값(출루율 맞춤안), KAL 결정 대기
+
+
+def late_level(vel):
+    e = VEL["late"] * max(VEL["cap_neg"], min(VEL["cap_pos"], vel - 50))
+    return e if e >= 0 else e * VEL["neg_scale"]
 
 
 # 정확 ↔ 변화 (KAL 2026-11-16 확정: 두 효과로 나눔, 자동 경기 +20 효과에 맞춘 조정값)
@@ -158,12 +170,16 @@ def in_zone(x, y):
     return abs(x) <= 1 and abs(y) <= 1
 
 
-def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0, pl=0.0, se=0.0):
+def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0, pl=0.0, se=0.0, le=0.0):
     g = GRADES.index(pick(rng, GRADES, [user.timing[k] for k in GRADES]))
     if slow > 0 and rng.random() < EYE["timing"] * slow:
         g = min(3, g + 1)      # 공이 느려져 타이밍이 한 단계 좋아짐 (작게)
     elif slow < 0 and rng.random() < -EYE["timing"] * slow:
         g = max(0, g - 1)      # 공이 빨라져 타이밍이 한 단계 나빠짐
+    if le > 0 and rng.random() < le:
+        g = max(0, g - 1)      # 구속: 공 자체가 빨라 늦음
+    elif le < 0 and rng.random() < -le:
+        g = min(3, g + 1)
     if not zone and rng.random() < P["out_zone_penalty"]:
         g = max(0, g - 1)
     if kind == "center":
@@ -171,6 +187,10 @@ def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0, pl=
     res = pick(rng, ["whiff", "foul", "weak", "normal", "strong"], OUTCOME[GRADES[g]])
     if not zone and res != "whiff" and rng.random() < P["out_zone_whiff"]:
         res = "whiff"  # 존 밖 공은 배트에 맞히기 어려움
+    if le != 0 and res == "foul" and rng.random() < abs(le) * VEL["whiff"]:
+        res = "whiff" if le > 0 else res   # 구속: 공이 빨라 파울이 될 공을 놓침
+    elif le < 0 and res == "whiff" and rng.random() < -le * VEL["whiff"]:
+        res = "foul"
     missed = g <= 1 or not zone   # 빗나간 스윙 (정확이 작동하는 곳)
     if missed and ce > 0:
         if res == "whiff" and rng.random() < ce:
@@ -217,8 +237,9 @@ def ball_in_play(rng, q, hr_mult=1.0):
     return "OUT"
 
 
-def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=50, st=50):
-    slow = slowdown(eye_diff)
+def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50):
+    slow = slowdown(eye_diff - VEL["eye_w"] * (vel - 50))
+    le = late_level(vel)
     ce, be = contact_level(con, brk, st), break_level(brk)
     pl, se = power_level(pw, st), stuff_level(st)
     hr_mult = max(0.0, 1 + POW["hr"] * pl)
@@ -234,7 +255,7 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=5
         if rng.random() < p_sw:
             log["swings"] += 1
             log["zswings" if zone else "oswings"] += 1
-            res = swing_result(rng, user, zone, kind, slow, ce, be, pl, se)
+            res = swing_result(rng, user, zone, kind, slow, ce, be, pl, se, le)
             if res == "whiff":
                 log["whiffs"] += 1
                 log["zwhiffs" if zone else "owhiffs"] += 1
@@ -259,14 +280,14 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=5
                 return "BB"
 
 
-def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50, pw=50, st=50):
+def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50):
     import os; n = int(os.environ.get("N", n))
     rng = random.Random(seed)
     user = USERS[user_name]
     log = {k: 0 for k in ("pitches", "zone", "swings", "zswings", "oswings", "whiffs", "zwhiffs", "owhiffs", "fouls")}
     c = {}
     for _ in range(n):
-        r = plate_appearance(rng, user, log, eye_diff, con, brk, pw, st)
+        r = plate_appearance(rng, user, log, eye_diff, con, brk, pw, st, vel)
         c[r] = c.get(r, 0) + 1
     pa = n
     hits = sum(c.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
