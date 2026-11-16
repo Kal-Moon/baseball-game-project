@@ -812,6 +812,18 @@ flowchart LR
   - 이유: 타이밍 게임이라 입력 지연이 가장 중요. Godot 공식 문서도 폰 브라우저보다 안드로이드 앱이 훨씬 빠르다고 함, 폰 브라우저 터치 동작 문제 보고도 있음 (사용자 글, 측정값 아님). 테스터 3~5명이면 플레이 계정 없이 파일로 충분 (개인 계정의 "12명 14일"은 정식 출시용 비공개 테스트 조건).
   - 타이밍 판정은 화면 프레임이 아니라 **터치가 들어온 시각**으로 계산 (프레임 단위면 1/60초 ≈ 17ms씩 끊김).
   - 확인 못 한 것: 클라우드 환경에서 Godot·안드로이드 빌드 도구를 받아 APK를 직접 만들 수 있는지. 안 되면 KAL PC에서 내보내기.
+- **공 도착 시간** (2026-11-16 확정, KAL): 정해 두지 않고 **조절판에서 바꿀 수 있게**, 테스터가 고른 값을 기록함. 시작값은 모두 근거 없는 추정.
+
+  | 값 | 시작값 | 조절 범위 |
+  | --- | --- | --- |
+  | 포심(구속 50) 도착 시간 | **650ms** (현실 약 420ms + 터치 지연·작은 화면 몫) | 400~1,000ms |
+  | 난이도 | 쉬움 800 / 보통 650 / 어려움 500ms (5.6절 난이도 선택) | |
+  | 구종별 | 포심 시간 ÷ 속도 비율 (2.3절). 예) 커브 0.85 → 약 765ms | |
+  | 선구 | × (1 + 느려짐) (5.7절) | |
+  | 구속 | 구속 +20 → 시간 −5% (선구 빨라짐 상한과 같은 크기) | 테스트 기록으로 5.10절 결과(구속 70 → 삼진 +2.0%p)에 맞춤 |
+
+  - 짚은 점: 5.10절의 구속 효과는 모델에서 "타이밍이 늦어질 확률"로만 넣었지만, 시험판에서는 실제로 공이 빨라져야 함 → 시간으로 바꾸고 크기는 기록을 보고 맞춤.
+  - 근거: 현실 90~100마일 패스트볼 약 400~460ms, MLB The Show 100마일 약 416ms(사용자 측정, 공식 아님), 폰 터치 지연 보통 수십 ms(기기마다 차이 큼). 모바일 야구 게임의 도착 시간 자료는 찾지 못함.
 
 ---
 
@@ -1197,7 +1209,7 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 - **ⓑ 타격 시험판 전에 정할 것** (이 순서로 하나씩):
   1. [x] **타격 시험판 범위** → 2026-11-16 확정, 4.1절: 무엇을 넣고 뺄지 (예: 타석 하나, 주자 없음, AI 투수 볼배합, 결과 표시). 시험판에서 **타이밍 분포를 기록**해 5.5절 유저 세 단계 가정을 고치는 것 포함
   2. [x] **엔진 확정** → 2026-11-16: Godot 4.7.x + GDScript, APK 직접 배포 (1장 표, 4.1절)
-  3. [ ] **게임 속 공 도착 시간** 시험판용 임시값 (아래 항목)
+  3. [x] **게임 속 공 도착 시간** 시험판용 임시값 → 2026-11-16: 조절판 + 시작값 650ms (4.1절)
   4. [ ] **시험판에 넣을 구종** (아래 "회전 그림 23개 작업량" 항목: 기본 11개만 넣을지)
 - **ⓒ 타격 시험판에서 해 보며 정함**: 타이밍 7단계 구간 폭, "완벽" 위치 옮기는 폭, 스와이프 인식 기준, 코스 궁합 경계·가운데 원 크기, 핫·콜드존 수치(타석 화면 정보), 강한 타구 비율 상한 70%, AI 투수 구종 등급 원 배율(구종 등급 수치), 실투 비중, 비슷한 구종 화면 구분, 미니 베이스 크기, 사구 몸 영역의 화면 속 크기
 - **투구 쪽 시뮬레이션** (투구 시험판 전): 시뮬레이션 단계 3에서 맞춘 것은 **유저가 칠 때**뿐. **유저가 던질 때**(원 타이밍, 원 크기, AI 타자)를 자동 경기와 맞추는 일이 남음 → 원 타이밍·원 크기 수치, 체력 효과 수치 항목
@@ -1353,3 +1365,4 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 - [Godot Google Play Billing – Godot Asset Store](https://store.godotengine.org/asset/godot-foundation/godot-google-play-billing/)
 
 - 엔진·배포 (2026-11-16): [Godot 4.7.2 released](https://www.opensourceforu.com/2026/08/godot-4-7-2-released/), [Godot 문서: Exporting for the Web (4.7)](https://docs.godotengine.org/en/4.7/tutorials/export/exporting_for_web.html), [Progress report: Web export in 4.3](https://godotengine.org/article/progress-report-web-export-in-4-3/), [itch.io 모바일 브라우저 터치 보고](https://itch.io/post/15704718), [Google Play 신규 개인 계정 테스트 요건](https://support.google.com/googleplay/android-developer/answer/14151465)
+- 공 도착 시간 (2026-11-16): [Operation Sports: 100mph fastball in-game test](https://forums.operationsports.com/forums/forum/baseball/mlb-the-show/892279-was-bored-and-did-some-testing-of-how-fast-a-100mph-fastball-really-is-in-the-game), [Hitting a Major League Fastball](https://sylvesterlmarquardt.substack.com/p/hitting-a-major-league-fastball), [HMNS: Sports Science – Pitching](https://blog.hmns.org/2015/10/sports-science-pitching/), [Google WALT TapLatency](https://os.unplugged.com/werunplugged/unplugged-system/raw/branch/main/external/walt/docs/TapLatency.md), [New Atlas: smartphone screen latency](https://newatlas.com/smartphone-screen-latency/29144/?amp=true)
