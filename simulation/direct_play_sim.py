@@ -120,6 +120,20 @@ def stuff_level(st):
     return e if e >= 0 else e * STF["neg_scale"]
 
 
+# 제구 (KAL 2026-11-16 확정: 주효과 = 원 크기, 실투 감소는 작게, 사구는 원 크기와 따로)
+#   원 크기(흩어짐) × (1 − circle × (제구 − 50)), 실투 비율 × (1 − miss × (제구 − 50)). 상한 제구 +20 ~ −40점.
+#   사구가 되는 몸 영역 기준을 원 크기에 맞춰 옮겨서, 제구 +20일 때 사구가 약 10%만 줄게 함 (사구 결정: 제구 효과는 작게).
+CTL = {"circle": 0.019, "miss": 0.015, "body": 0.0135, "body_neg": 0.012, "neg_scale": 0.6, "cap_pos": 20, "cap_neg": -40}
+
+
+def control_mods(ctl):
+    c = max(CTL["cap_neg"], min(CTL["cap_pos"], ctl - 50))
+    if c < 0:
+        c *= CTL["neg_scale"]   # 원이 커지는 쪽은 볼넷이 더 빨리 늘어서 줄임
+    return {"sigma": P["sigma"] * (1 - CTL["circle"] * c), "miss": P["miss"] * max(0.0, 1 - CTL["miss"] * c),
+            "body_x": P["body_x"] + (CTL["body"] if c >= 0 else CTL["body_neg"]) * c}
+
+
 # 실력 차이 줄이기 (KAL 2026-11-16, B안: 잘함이 보통보다 타율 약 +.040)
 #   타이밍 단계별 결과표를 "보통 유저 평균 결과" 쪽으로 SKILL_BLEND 만큼 당김. 1.0 = 원래 표, 0 = 단계 차이 없음.
 #   완벽이 항상 가장 좋다는 순서는 유지됨 (섞어도 순서가 바뀌지 않음).
@@ -148,9 +162,10 @@ def pick(rng, items, weights):
     return items[-1]
 
 
-def pitch_location(rng, balls, strikes):
+def pitch_location(rng, balls, strikes, cm=None):
     """상대 AI 투수가 던진 공의 위치와 종류 ('normal' / 'center' 한가운데 실투 / 'wild' 빠진 공)"""
-    if rng.random() < P["miss"]:
+    cm = cm or {"sigma": P["sigma"], "miss": P["miss"]}
+    if rng.random() < cm["miss"]:
         if rng.random() < P["miss_center"]:
             return rng.gauss(0, 0.2), rng.gauss(0, 0.2), "center"
         side = rng.choice([-1, 1])
@@ -163,7 +178,7 @@ def pitch_location(rng, balls, strikes):
             ax, ay = rng.choice([-1, 1]) * rng.uniform(1.15, 1.5), rng.uniform(-1, 1)
         else:
             ax, ay = rng.uniform(-1, 1), rng.choice([-1, 1]) * rng.uniform(1.15, 1.5)
-    return ax + rng.gauss(0, P["sigma"]), ay + rng.gauss(0, P["sigma"]), "normal"
+    return ax + rng.gauss(0, cm["sigma"]), ay + rng.gauss(0, cm["sigma"]), "normal"
 
 
 def in_zone(x, y):
@@ -237,7 +252,8 @@ def ball_in_play(rng, q, hr_mult=1.0):
     return "OUT"
 
 
-def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50):
+def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50, ctl=50):
+    cm = control_mods(ctl)
     slow = slowdown(eye_diff - VEL["eye_w"] * (vel - 50))
     le = late_level(vel)
     ce, be = contact_level(con, brk, st), break_level(brk)
@@ -245,7 +261,7 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=5
     hr_mult = max(0.0, 1 + POW["hr"] * pl)
     balls = strikes = 0
     while True:
-        x, y, kind = pitch_location(rng, balls, strikes)
+        x, y, kind = pitch_location(rng, balls, strikes, cm)
         zone = in_zone(x, y)
         log["pitches"] += 1
         log["zone"] += zone
@@ -268,7 +284,7 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=5
             if strikes == 3:
                 return "K"
             continue
-        if x < P["body_x"]:
+        if x < cm["body_x"]:
             return "HBP"
         if zone:
             strikes += 1
@@ -280,14 +296,14 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=5
                 return "BB"
 
 
-def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50):
+def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50, pw=50, st=50, vel=50, ctl=50):
     import os; n = int(os.environ.get("N", n))
     rng = random.Random(seed)
     user = USERS[user_name]
     log = {k: 0 for k in ("pitches", "zone", "swings", "zswings", "oswings", "whiffs", "zwhiffs", "owhiffs", "fouls")}
     c = {}
     for _ in range(n):
-        r = plate_appearance(rng, user, log, eye_diff, con, brk, pw, st, vel)
+        r = plate_appearance(rng, user, log, eye_diff, con, brk, pw, st, vel, ctl)
         c[r] = c.get(r, 0) + 1
     pa = n
     hits = sum(c.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
