@@ -57,6 +57,18 @@ OUTCOME = {  # [whiff, foul, weak, normal, strong]
 }
 
 
+# 선구 (KAL 2026-11-16 확정: 공이 느려지는 효과는 그대로, 느려진 시간을 "볼을 고르는 데" 주로 씀)
+#   느려짐 = 계수 × (선구 − 상대 구속), 상한 +10%(느려짐) / −5%(빨라짐).
+#   효과 1(주): 느려진 만큼 볼에 속는 비율이 줄어듦.  효과 2(부): 타이밍이 한 단계 좋아질 확률이 조금 늘어남.
+#   현실에서 잰 값이 아니고 자동 경기(선구 50→70: 볼넷 +1.9%p, 출루율 +.012)에 맞춘 조정값.
+#   지금 값은 A안(출루율 +.012에 맞춤, 볼넷은 +1.2%p) 임시값. A/B 선택은 KAL 결정 대기 (2026-11-16).
+EYE = {"coef": 0.0025, "cap_slow": 0.10, "cap_fast": -0.05, "chase": 2.0, "timing": 0.5}
+
+
+def slowdown(eye_diff):
+    return max(EYE["cap_fast"], min(EYE["cap_slow"], EYE["coef"] * eye_diff))
+
+
 # 실력 차이 줄이기 (KAL 2026-11-16, B안: 잘함이 보통보다 타율 약 +.040)
 #   타이밍 단계별 결과표를 "보통 유저 평균 결과" 쪽으로 SKILL_BLEND 만큼 당김. 1.0 = 원래 표, 0 = 단계 차이 없음.
 #   완벽이 항상 가장 좋다는 순서는 유지됨 (섞어도 순서가 바뀌지 않음).
@@ -107,8 +119,12 @@ def in_zone(x, y):
     return abs(x) <= 1 and abs(y) <= 1
 
 
-def swing_result(rng, user: UserSkill, zone, kind):
+def swing_result(rng, user: UserSkill, zone, kind, slow=0.0):
     g = GRADES.index(pick(rng, GRADES, [user.timing[k] for k in GRADES]))
+    if slow > 0 and rng.random() < EYE["timing"] * slow:
+        g = min(3, g + 1)      # 공이 느려져 타이밍이 한 단계 좋아짐 (작게)
+    elif slow < 0 and rng.random() < -EYE["timing"] * slow:
+        g = max(0, g - 1)      # 공이 빨라져 타이밍이 한 단계 나빠짐
     if not zone and rng.random() < P["out_zone_penalty"]:
         g = max(0, g - 1)
     if kind == "center":
@@ -134,20 +150,21 @@ def ball_in_play(rng, q):
     return "OUT"
 
 
-def plate_appearance(rng, user: UserSkill, log):
+def plate_appearance(rng, user: UserSkill, log, eye_diff=0):
+    slow = slowdown(eye_diff)
     balls = strikes = 0
     while True:
         x, y, kind = pitch_location(rng, balls, strikes)
         zone = in_zone(x, y)
         log["pitches"] += 1
         log["zone"] += zone
-        p_sw = user.zone_swing if zone else user.chase * (0.7 if abs(x) > 1.6 or abs(y) > 1.6 else 1.0)
+        p_sw = user.zone_swing if zone else user.chase * (1 - EYE["chase"] * slow) * (0.7 if abs(x) > 1.6 or abs(y) > 1.6 else 1.0)
         if strikes == 2:
             p_sw = min(0.95, p_sw + (0.15 if zone else 0.05))  # 2스트라이크: 존 안 공은 더 지킴
         if rng.random() < p_sw:
             log["swings"] += 1
             log["zswings" if zone else "oswings"] += 1
-            res = swing_result(rng, user, zone, kind)
+            res = swing_result(rng, user, zone, kind, slow)
             if res == "whiff":
                 log["whiffs"] += 1
                 log["zwhiffs" if zone else "owhiffs"] += 1
@@ -172,14 +189,14 @@ def plate_appearance(rng, user: UserSkill, log):
                 return "BB"
 
 
-def run(user_name="보통", n=200_000, seed=1):
+def run(user_name="보통", n=200_000, seed=1, eye_diff=0):
     import os; n = int(os.environ.get("N", n))
     rng = random.Random(seed)
     user = USERS[user_name]
     log = {k: 0 for k in ("pitches", "zone", "swings", "zswings", "oswings", "whiffs", "zwhiffs", "owhiffs", "fouls")}
     c = {}
     for _ in range(n):
-        r = plate_appearance(rng, user, log)
+        r = plate_appearance(rng, user, log, eye_diff)
         c[r] = c.get(r, 0) + 1
     pa = n
     hits = sum(c.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
