@@ -21,7 +21,7 @@
 | 타깃 시장 | 국내와 해외 모두. 처음부터 다국어 구조로 만들고, 번역(영어 등)은 마지막 단계에 추가 |
 | 개발 PC | 노트북 (i5-8250U, RAM 8GB, MX150 VRAM 2GB). 2D 개발에 제약 없음 |
 | 테스트 기기 | 본인 안드로이드 폰·태블릿 (USB 연결). 에뮬레이터는 RAM 부족 |
-| 엔진 | **Godot** (가볍고, 화면 구성까지 텍스트라 Claude가 코드를 쓰기 좋음) |
+| 엔진 | **Godot 4.7.x + GDScript** (2026-11-16 확정, KAL. 가볍고, 화면 구성까지 텍스트라 Claude가 코드를 쓰기 좋음. 4.7.2가 2026-08 최신 안정판, 4.8은 시험판이라 쓰지 않음) |
 | 개발 방식 | 기획은 KAL, 코드는 Claude. 하루 1~2시간 |
 | 멀티(유저 대결) | 첫 버전에서 제외, 추후 도입. 솔로와 겹치지 않는 별도 콘텐츠 (실시간 대전, 랭킹 챌린지, 더 쇼 대결 모드 등 참고) |
 | 과금 | 추후 논의. 넣게 되면 Godot 플러그인으로 추가 (그때부터 Gradle 빌드라 빌드가 느려짐) |
@@ -808,7 +808,10 @@ flowchart LR
 - **뺄 것**: 주자·주루·도루, 수비, 투구 조작, 성장·육성, 메뉴·화면 흐름, 핫·콜드존(쌓인 기록이 필요함). 그림은 도형으로.
 - 예) 켜면 바로 타석. 투수가 던지고, 스와이프로 치면 "좌중간 2루타"가 뜨고 다음 타석. 20타석쯤 치면 기록 파일이 쌓임.
 - **해 볼 사람**: 실력이 다른 **3~5명이 각 100타석 이상** (유저 세 단계를 고치려면 KAL 한 명 기록으로는 부족). 인원은 근거 자료가 아닌 추정.
-- 폰에 올리는 방법(앱 설치 파일 / 브라우저)은 엔진 확정(보류 목록 ⓑ ②)과 함께 정함.
+- **폰에 올리는 방법** (2026-11-16 확정, KAL): **안드로이드 앱 파일(APK)을 직접 보냄**. 테스터에 아이폰 사용자가 없어 브라우저판은 만들지 않음.
+  - 이유: 타이밍 게임이라 입력 지연이 가장 중요. Godot 공식 문서도 폰 브라우저보다 안드로이드 앱이 훨씬 빠르다고 함, 폰 브라우저 터치 동작 문제 보고도 있음 (사용자 글, 측정값 아님). 테스터 3~5명이면 플레이 계정 없이 파일로 충분 (개인 계정의 "12명 14일"은 정식 출시용 비공개 테스트 조건).
+  - 타이밍 판정은 화면 프레임이 아니라 **터치가 들어온 시각**으로 계산 (프레임 단위면 1/60초 ≈ 17ms씩 끊김).
+  - 확인 못 한 것: 클라우드 환경에서 Godot·안드로이드 빌드 도구를 받아 APK를 직접 만들 수 있는지. 안 되면 KAL PC에서 내보내기.
 
 ---
 
@@ -1193,7 +1196,7 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 
 - **ⓑ 타격 시험판 전에 정할 것** (이 순서로 하나씩):
   1. [x] **타격 시험판 범위** → 2026-11-16 확정, 4.1절: 무엇을 넣고 뺄지 (예: 타석 하나, 주자 없음, AI 투수 볼배합, 결과 표시). 시험판에서 **타이밍 분포를 기록**해 5.5절 유저 세 단계 가정을 고치는 것 포함
-  2. [ ] **엔진 확정** (지금 "Godot (예정)")
+  2. [x] **엔진 확정** → 2026-11-16: Godot 4.7.x + GDScript, APK 직접 배포 (1장 표, 4.1절)
   3. [ ] **게임 속 공 도착 시간** 시험판용 임시값 (아래 항목)
   4. [ ] **시험판에 넣을 구종** (아래 "회전 그림 23개 작업량" 항목: 기본 11개만 넣을지)
 - **ⓒ 타격 시험판에서 해 보며 정함**: 타이밍 7단계 구간 폭, "완벽" 위치 옮기는 폭, 스와이프 인식 기준, 코스 궁합 경계·가운데 원 크기, 핫·콜드존 수치(타석 화면 정보), 강한 타구 비율 상한 70%, AI 투수 구종 등급 원 배율(구종 등급 수치), 실투 비중, 비슷한 구종 화면 구분, 미니 베이스 크기, 사구 몸 영역의 화면 속 크기
@@ -1348,3 +1351,5 @@ AI 9팀은 50±5, 각 조건 10시즌 평균.
 - [Gamers Are Overwhelmingly Negative About Gen AI in Video Games – Quantic Foundry](https://quanticfoundry.com/2025/12/18/gen-ai/)
 - [App testing requirements for new personal developer accounts – Play Console Help](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en)
 - [Godot Google Play Billing – Godot Asset Store](https://store.godotengine.org/asset/godot-foundation/godot-google-play-billing/)
+
+- 엔진·배포 (2026-11-16): [Godot 4.7.2 released](https://www.opensourceforu.com/2026/08/godot-4-7-2-released/), [Godot 문서: Exporting for the Web (4.7)](https://docs.godotengine.org/en/4.7/tutorials/export/exporting_for_web.html), [Progress report: Web export in 4.3](https://godotengine.org/article/progress-report-web-export-in-4-3/), [itch.io 모바일 브라우저 터치 보고](https://itch.io/post/15704718), [Google Play 신규 개인 계정 테스트 요건](https://support.google.com/googleplay/android-developer/answer/14151465)
