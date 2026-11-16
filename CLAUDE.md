@@ -55,8 +55,14 @@
 ## 환경 참고
 
 - 클라우드 환경 네트워크는 "사용자 지정"이고, 허용 도메인 목록에 있는 곳만 열린다 (2026-10-06 접속 확인).
-  - **열림**: `baseballsavant.mlb.com`(CSV 내려받기 됨), `npb.jp`, `japanbaseballlab.com`, `1point02.jp`, `tokyudx.com`, `nf3.sakura.ne.jp`, `baseball.yahoo.co.jp`(첫 화면은 막힌 주소로 넘어가지만 `/npb/` 기록 페이지는 됨), `www.koreabaseball.com`, `www.statiz.co.kr`
+  - **열림**: `www.ncloud.com`·`api.ncloud-docs.com`·`guide.ncloud-docs.com`(2026-11-16 추가), `baseballsavant.mlb.com`(CSV 내려받기 됨), `npb.jp`, `japanbaseballlab.com`, `1point02.jp`, `tokyudx.com`, `nf3.sakura.ne.jp`, `baseball.yahoo.co.jp`(첫 화면은 막힌 주소로 넘어가지만 `/npb/` 기록 페이지는 됨), `www.koreabaseball.com`, `www.statiz.co.kr`
   - **허용했지만 응답 없음**(502, 사이트 쪽 문제로 보임): `baseball-lab.jp`, `npbscholar.com`
   - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
   - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
+- **네이버 데이터랩(검색어 트렌드) API 규칙** (KAL, 2026-11-16)
+  - 부를 때마다 **먼저 요금 페이지를 열어 무료 범위를 확인**한다: https://www.ncloud.com/product/applicationService/naverApiHub#pricing . 페이지를 못 열면 호출하지 않는다.
+  - **기본 무료 구간 안에서만** 호출한다. 2026-11-16 확인 기준: 검색어 트렌드·쇼핑 인사이트는 0~30,000건 무료(30,001~50,000건은 "유료 구간이지만 한시적 무료"라서 쓰지 않음), 검색 API는 0~775,000건 무료에 하루 최대 25,000건. 이용량은 API 호출 횟수로 셈. 집계 기간(월 단위인지)은 페이지에 적혀 있지 않아 확인 못 함.
+  - 무료 범위를 넘을 것 같으면 멈추고 KAL에게 먼저 묻는다. 호출 몇 번을 썼는지 말해 준다.
+  - 서비스는 NAVER API HUB(네이버 클라우드). 주소 `https://naverapihub.apigw.ntruss.com/search-trend/v1/search`(POST), 헤더 `X-NCP-APIGW-API-KEY-ID`·`X-NCP-APIGW-API-KEY`. 설명서: https://api.ncloud-docs.com/docs/naver-api-hub-search-trend . 예전 `openapi.naver.com` 데이터랩은 2026년 7월 종료 안내가 있음.
+  - 키는 채팅에 받지 않는다 (환경의 네트워크 비밀 값으로 넣음).
 - Savant 투수별 구종 평균 구속 받는 법: `https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=<구종코드>%7C&hfGT=R%7C&hfSea=<연도>%7C&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&chk_stats_velocity=on` (구종코드 FF·SI·FC·SL·ST·CU·KC·SV·CS·FS·FO·CH·SC·EP, 열 `pitches`·`velocity`)
