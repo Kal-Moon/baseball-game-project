@@ -63,5 +63,6 @@
   - **허용했지만 응답 없음**(502, 사이트 쪽 문제로 보임): `baseball-lab.jp`, `npbscholar.com`
   - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
   - `datalab.naver.com`: 2026-11-15 허용 목록에 추가했지만 그 세션에서는 15분 넘게 403으로 막힘 → **새 세션에서 다시 확인**. 구단 주·부 스타일을 정할 대표 선수 검색량 비교용 (2.1절)
+  - 네이버 데이터랩 **검색어 트렌드 API** (B안 대안): `POST https://openapi.naver.com/v1/datalab/search`, 헤더 `X-Naver-Client-Id`·`X-Naver-Client-Secret` (KAL이 키 발급 중, 2026-11-16). 키는 채팅으로 받지 않고 환경의 네트워크 비밀값(호스트 `openapi.naver.com`)으로 받음
   - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
 - Savant 투수별 구종 평균 구속 받는 법: `https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=<구종코드>%7C&hfGT=R%7C&hfSea=<연도>%7C&player_type=pitcher&group_by=name&min_pitches=0&min_results=0&chk_stats_velocity=on` (구종코드 FF·SI·FC·SL·ST·CU·KC·SV·CS·FS·FO·CH·SC·EP, 열 `pitches`·`velocity`)
