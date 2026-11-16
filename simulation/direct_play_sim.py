@@ -75,12 +75,12 @@ def slowdown(eye_diff):
 #      빗나간 스윙(너무·빠름·늦음, 존 밖 공)의 헛스윙이 파울·빗맞은 타구로 바뀌고, 빠름·늦음의 약한 타구가 쓸 만한 타구로 바뀜.
 #      코스·스윙 궁합이 나쁠 때 타구가 나빠지는 확률도 줄어듦. 완벽·좋음은 건드리지 않음.
 #   ② 장타 쪽 = 변화만. 맞힌 타구가 한 단계 약해질 확률 (궁합 판단이 어려워 빗맞음). 상한: 변화 −40 ~ +20점.
-CON = {"coef": 0.016, "brk_weight": 0.25, "cap_pos": 40, "cap_neg": -20, "to_foul": 0.7, "upgrade": 2.0, "neg_whiff": 0.55, "neg_down": 2.0}
+CON = {"coef": 0.016, "brk_weight": 0.25, "cap_pos": 40, "cap_neg": -20, "stuff_weight": 0.16, "to_foul": 0.7, "upgrade": 2.0, "neg_whiff": 0.55, "neg_down": 2.0}
 BRK = {"coef": 0.008, "cap_pos": 20, "cap_neg": -40, "neg_scale": 0.4}
 
 
-def contact_level(con, brk):
-    lv = (con - 50) - CON["brk_weight"] * (brk - 50)
+def contact_level(con, brk, st=50):
+    lv = (con - 50) - CON["brk_weight"] * (brk - 50) - CON["stuff_weight"] * (st - 50)
     e = CON["coef"] * max(CON["cap_neg"], min(CON["cap_pos"], lv))
     return e
 
@@ -88,6 +88,24 @@ def contact_level(con, brk):
 def break_level(brk):
     e = BRK["coef"] * max(BRK["cap_neg"], min(BRK["cap_pos"], brk - 50))
     return e if e >= 0 else e * BRK["neg_scale"]   # 보통 타구가 강한 타구보다 많아서 줄임
+
+
+# 파워 ↔ 구위 (KAL 2026-11-16 확정: 정확 ↔ 변화처럼 두 효과로 나눔, 자동 경기 +20 효과에 맞춘 조정값)
+#   ① 장타 쪽 = 파워 대 구위. 맞대결 값 = (파워 − 50) − w × (구위 − 50), 상한 +40 / −20점.
+#      강한 타구의 홈런 확률 × (1 + hr × 값), 보통 타구가 강한 타구로 바뀔 확률 = up × 값 × 타이밍 가중치(완벽일수록 큼).
+#   ② 먹힌 타구 쪽 = 구위만. 보통 타구가 약한 타구로 (배트에 밀림). 상한 구위 +20 ~ −40점.
+POW = {"stuff_weight": 0.3, "hr": 0.008, "up": 0.01, "neg_up": 1.7, "cap_pos": 40, "cap_neg": -20}
+TIMING_W = [0.0, 0.3, 0.7, 1.0]   # 너무 · 빠름/늦음 · 좋음 · 완벽
+STF = {"coef": 0.004, "cap_pos": 20, "cap_neg": -40, "neg_scale": 0.3}
+
+
+def power_level(pw, st):
+    return max(POW["cap_neg"], min(POW["cap_pos"], (pw - 50) - POW["stuff_weight"] * (st - 50)))
+
+
+def stuff_level(st):
+    e = STF["coef"] * max(STF["cap_neg"], min(STF["cap_pos"], st - 50))
+    return e if e >= 0 else e * STF["neg_scale"]
 
 
 # 실력 차이 줄이기 (KAL 2026-11-16, B안: 잘함이 보통보다 타율 약 +.040)
@@ -140,7 +158,7 @@ def in_zone(x, y):
     return abs(x) <= 1 and abs(y) <= 1
 
 
-def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0):
+def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0, pl=0.0, se=0.0):
     g = GRADES.index(pick(rng, GRADES, [user.timing[k] for k in GRADES]))
     if slow > 0 and rng.random() < EYE["timing"] * slow:
         g = min(3, g + 1)      # 공이 느려져 타이밍이 한 단계 좋아짐 (작게)
@@ -174,12 +192,23 @@ def swing_result(rng, user: UserSkill, zone, kind, slow=0.0, ce=0.0, be=0.0):
             i = 1     # 변화: 궁합 판단이 어려워 빗맞음 → 강한 타구가 보통으로 (장타 억제)
         elif be < 0 and i == 1 and rng.random() < -be:
             i = 2
-        res = order[max(0, min(2, i))]
+        i = max(0, min(2, i))
+        up = POW["up"] * pl * TIMING_W[g]
+        if up > 0 and i == 1 and rng.random() < up:
+            i = 2     # 파워: 잘 맞힌 타구가 더 강해짐
+        elif up < 0 and i == 2 and rng.random() < -up * POW["neg_up"]:
+            i = 1
+        if se > 0 and i == 1 and rng.random() < se:
+            i = 0     # 구위: 배트에 밀려 먹힌 타구
+        elif se < 0 and i == 0 and rng.random() < -se:
+            i = 1
+        res = order[i]
     return res
 
 
-def ball_in_play(rng, q):
+def ball_in_play(rng, q, hr_mult=1.0):
     hit, d2, d3, hr = P[q]
+    hr = hr * hr_mult
     if rng.random() < hr:
         return "HR"
     if rng.random() < hit:
@@ -188,9 +217,11 @@ def ball_in_play(rng, q):
     return "OUT"
 
 
-def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50):
+def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50, pw=50, st=50):
     slow = slowdown(eye_diff)
-    ce, be = contact_level(con, brk), break_level(brk)
+    ce, be = contact_level(con, brk, st), break_level(brk)
+    pl, se = power_level(pw, st), stuff_level(st)
+    hr_mult = max(0.0, 1 + POW["hr"] * pl)
     balls = strikes = 0
     while True:
         x, y, kind = pitch_location(rng, balls, strikes)
@@ -203,7 +234,7 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50):
         if rng.random() < p_sw:
             log["swings"] += 1
             log["zswings" if zone else "oswings"] += 1
-            res = swing_result(rng, user, zone, kind, slow, ce, be)
+            res = swing_result(rng, user, zone, kind, slow, ce, be, pl, se)
             if res == "whiff":
                 log["whiffs"] += 1
                 log["zwhiffs" if zone else "owhiffs"] += 1
@@ -212,7 +243,7 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50):
                 log["fouls"] += 1
                 strikes = min(2, strikes + 1)
             else:
-                return ball_in_play(rng, res)
+                return ball_in_play(rng, res, hr_mult)
             if strikes == 3:
                 return "K"
             continue
@@ -228,14 +259,14 @@ def plate_appearance(rng, user: UserSkill, log, eye_diff=0, con=50, brk=50):
                 return "BB"
 
 
-def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50):
+def run(user_name="보통", n=200_000, seed=1, eye_diff=0, con=50, brk=50, pw=50, st=50):
     import os; n = int(os.environ.get("N", n))
     rng = random.Random(seed)
     user = USERS[user_name]
     log = {k: 0 for k in ("pitches", "zone", "swings", "zswings", "oswings", "whiffs", "zwhiffs", "owhiffs", "fouls")}
     c = {}
     for _ in range(n):
-        r = plate_appearance(rng, user, log, eye_diff, con, brk)
+        r = plate_appearance(rng, user, log, eye_diff, con, brk, pw, st)
         c[r] = c.get(r, 0) + 1
     pa = n
     hits = sum(c.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
