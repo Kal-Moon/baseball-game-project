@@ -1,0 +1,194 @@
+"""
+직접 플레이 한 타석 모델 v1 (2026-11-16, 시뮬레이션 단계 ②)
+
+목적: 유저가 직접 칠 때(공 하나하나: 투구 위치 → 스윙 판단 → 타이밍 7단계 → 코스·스윙 궁합 → 결과)
+      평균 능력치 + 보통 유저의 결과가 자동 경기(baseball_sim.py v2, KBO 2026)와 같아지도록 맞춘다.
+      (KAL 결정 2026-11-16: "평균 유저 = 자동 경기")
+
+좌표: 스트라이크 존을 가로·세로 -1 ~ 1 로 둔 단위. x < 0 이 타자 몸쪽.
+능력치 효과(선구·정확·파워·구위·변화)의 계수는 단계 ③에서 정한다. 여기서는 모두 평균(50)이라 0.
+"""
+import random
+from dataclasses import dataclass
+
+# ------------------------------------------------------------
+# 1. 유저 실력 (스윙 판단은 MLB 2026 현실 타자 평균, 타이밍 분포는 가정 → 타격 시험판 기록으로 고침)
+# ------------------------------------------------------------
+@dataclass
+class UserSkill:
+    name: str
+    zone_swing: float   # 존 안 공에 스윙하는 비율
+    chase: float        # 존 밖 공에 스윙하는 비율 (볼에 속는 비율)
+    timing: dict        # 스윙했을 때 타이밍 분포: 너무 / 빠름·늦음 / 좋음 / 완벽
+    compat: tuple       # 코스·스윙 궁합 (좋음, 보통, 나쁨) 비율
+
+
+USERS = {
+    "서툰": UserSkill("서툰", 0.60, 0.40, {"too": 0.40, "near": 0.35, "good": 0.20, "perfect": 0.05}, (0.25, 0.45, 0.30)),
+    "보통": UserSkill("보통", 0.667, 0.305, {"too": 0.25, "near": 0.35, "good": 0.30, "perfect": 0.10}, (0.40, 0.40, 0.20)),
+    "잘함": UserSkill("잘함", 0.72, 0.22, {"too": 0.15, "near": 0.30, "good": 0.35, "perfect": 0.20}, (0.55, 0.35, 0.10)),
+}
+
+# ------------------------------------------------------------
+# 2. 조정값 (보통 유저 + 평균 능력치가 목표에 맞도록 조정한 값, 현실에서 직접 잰 값이 아님)
+# ------------------------------------------------------------
+P = {
+    # 투구 위치 (상대 AI 투수, 제구 50)
+    "aim_zone": 0.47,        # 존 안을 노리는 비율 (볼카운트로 조금씩 바뀜)
+    "sigma": 0.42,           # 원 크기에 해당하는 흩어짐 (제구 50)
+    "miss": 0.03,            # 실투 비율 (공 하나당)
+    "miss_center": 0.85,     # 실투 중 한가운데 실투 비중 (나머지는 빠진 공)
+    "body_x": -2.13,         # 이보다 몸쪽이면 사구 (타자 몸 영역)
+    # 스윙 결과: 타이밍별 [헛스윙, 파울, 약한, 보통, 강한 타구] (존 안 공)
+    "out_zone_penalty": 0.6, # 존 밖 공은 이 확률로 타이밍이 한 단계 나빠짐
+    "out_zone_whiff": 0.18,  # 존 밖 공은 맞힐 타구가 이 확률로 헛스윙이 됨
+    # 타구 질 → 결과 [안타 확률, 그중 2루타, 3루타, 홈런 확률(타구 전체 기준)]
+    "weak":   (0.12, 0.05, 0.00, 0.000),
+    "normal": (0.355, 0.20, 0.02, 0.010),
+    "strong": (0.62, 0.32, 0.03, 0.125),
+}
+
+GRADES = ["too", "near", "good", "perfect"]
+OUTCOME = {  # [whiff, foul, weak, normal, strong]
+    "too":     [0.45, 0.42, 0.13, 0.00, 0.00],
+    "near":    [0.06, 0.52, 0.24, 0.18, 0.00],
+    "good":    [0.00, 0.40, 0.14, 0.32, 0.14],
+    "perfect": [0.00, 0.22, 0.05, 0.25, 0.48],
+}
+
+
+def pick(rng, items, weights):
+    r = rng.random() * sum(weights)
+    for it, w in zip(items, weights):
+        r -= w
+        if r < 0:
+            return it
+    return items[-1]
+
+
+def pitch_location(rng, balls, strikes):
+    """상대 AI 투수가 던진 공의 위치와 종류 ('normal' / 'center' 한가운데 실투 / 'wild' 빠진 공)"""
+    if rng.random() < P["miss"]:
+        if rng.random() < P["miss_center"]:
+            return rng.gauss(0, 0.2), rng.gauss(0, 0.2), "center"
+        side = rng.choice([-1, 1])
+        return side * rng.uniform(1.8, 2.6), rng.uniform(-1.5, 1.5), "wild"
+    aim = P["aim_zone"] + (0.2 if balls == 3 else 0) - (0.12 if strikes == 2 and balls < 2 else 0)
+    if rng.random() < aim:
+        ax, ay = rng.uniform(-0.85, 0.85), rng.uniform(-0.85, 0.85)
+    else:
+        if rng.random() < 0.5:
+            ax, ay = rng.choice([-1, 1]) * rng.uniform(1.15, 1.5), rng.uniform(-1, 1)
+        else:
+            ax, ay = rng.uniform(-1, 1), rng.choice([-1, 1]) * rng.uniform(1.15, 1.5)
+    return ax + rng.gauss(0, P["sigma"]), ay + rng.gauss(0, P["sigma"]), "normal"
+
+
+def in_zone(x, y):
+    return abs(x) <= 1 and abs(y) <= 1
+
+
+def swing_result(rng, user: UserSkill, zone, kind):
+    g = GRADES.index(pick(rng, GRADES, [user.timing[k] for k in GRADES]))
+    if not zone and rng.random() < P["out_zone_penalty"]:
+        g = max(0, g - 1)
+    if kind == "center":
+        g = min(3, g + 1)  # 한가운데 실투는 치기 쉬움 (무브먼트 감소)
+    res = pick(rng, ["whiff", "foul", "weak", "normal", "strong"], OUTCOME[GRADES[g]])
+    if not zone and res != "whiff" and rng.random() < P["out_zone_whiff"]:
+        res = "whiff"  # 존 밖 공은 배트에 맞히기 어려움
+    if res in ("weak", "normal", "strong"):
+        c = pick(rng, ["good", "mid", "bad"], user.compat)
+        order = ["weak", "normal", "strong"]
+        i = order.index(res) + (1 if c == "good" and rng.random() < 0.3 else 0) - (1 if c == "bad" and rng.random() < 0.5 else 0)
+        res = order[max(0, min(2, i))]
+    return res
+
+
+def ball_in_play(rng, q):
+    hit, d2, d3, hr = P[q]
+    if rng.random() < hr:
+        return "HR"
+    if rng.random() < hit:
+        r = rng.random()
+        return "3B" if r < d3 else "2B" if r < d3 + d2 else "1B"
+    return "OUT"
+
+
+def plate_appearance(rng, user: UserSkill, log):
+    balls = strikes = 0
+    while True:
+        x, y, kind = pitch_location(rng, balls, strikes)
+        zone = in_zone(x, y)
+        log["pitches"] += 1
+        log["zone"] += zone
+        p_sw = user.zone_swing if zone else user.chase * (0.7 if abs(x) > 1.6 or abs(y) > 1.6 else 1.0)
+        if strikes == 2:
+            p_sw = min(0.95, p_sw + (0.15 if zone else 0.05))  # 2스트라이크: 존 안 공은 더 지킴
+        if rng.random() < p_sw:
+            log["swings"] += 1
+            log["zswings" if zone else "oswings"] += 1
+            res = swing_result(rng, user, zone, kind)
+            if res == "whiff":
+                log["whiffs"] += 1
+                log["zwhiffs" if zone else "owhiffs"] += 1
+                strikes += 1
+            elif res == "foul":
+                log["fouls"] += 1
+                strikes = min(2, strikes + 1)
+            else:
+                return ball_in_play(rng, res)
+            if strikes == 3:
+                return "K"
+            continue
+        if x < P["body_x"]:
+            return "HBP"
+        if zone:
+            strikes += 1
+            if strikes == 3:
+                return "K"
+        else:
+            balls += 1
+            if balls == 4:
+                return "BB"
+
+
+def run(user_name="보통", n=200_000, seed=1):
+    import os; n = int(os.environ.get("N", n))
+    rng = random.Random(seed)
+    user = USERS[user_name]
+    log = {k: 0 for k in ("pitches", "zone", "swings", "zswings", "oswings", "whiffs", "zwhiffs", "owhiffs", "fouls")}
+    c = {}
+    for _ in range(n):
+        r = plate_appearance(rng, user, log)
+        c[r] = c.get(r, 0) + 1
+    pa = n
+    hits = sum(c.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
+    ab = pa - c.get("BB", 0) - c.get("HBP", 0)
+    tb = c.get("1B", 0) + 2 * c.get("2B", 0) + 3 * c.get("3B", 0) + 4 * c.get("HR", 0)
+    bip = ab - c.get("K", 0) - c.get("HR", 0)
+    zone_n = log["zone"]; out_n = log["pitches"] - zone_n
+    return {
+        "AVG": hits / ab, "OBP": (hits + c.get("BB", 0) + c.get("HBP", 0)) / pa, "SLG": tb / ab,
+        "BABIP": (hits - c.get("HR", 0)) / bip,
+        "K%": c.get("K", 0) / pa, "BB%": c.get("BB", 0) / pa, "HBP%": c.get("HBP", 0) / pa, "HR%": c.get("HR", 0) / pa,
+        "P/PA": log["pitches"] / pa, "Zone%": zone_n / log["pitches"],
+        "Swing%": log["swings"] / log["pitches"], "ZSwing%": log["zswings"] / zone_n, "Chase%": log["oswings"] / out_n,
+        "Whiff/Sw": log["whiffs"] / log["swings"],
+        "ZWhiff": log["zwhiffs"] / max(1, log["zswings"]), "OWhiff": log["owhiffs"] / max(1, log["oswings"]),
+        "Foul/Sw": log["fouls"] / log["swings"],
+    }
+
+
+# 목표: 타석 결과 = KBO 2026 (자동 경기 v2와 같음), 공 하나 단위 = MLB 2026 (KBO는 공 단위 공개 자료 없음)
+TARGET = {
+    "AVG": .268, "OBP": .346, "SLG": .404, "BABIP": .317, "K%": .195, "BB%": .094, "HBP%": .0148, "HR%": .0241,
+    "P/PA": 3.89, "Zone%": .475, "Swing%": .477, "ZSwing%": .667, "Chase%": .305, "Whiff/Sw": .251,
+    "ZWhiff": .161, "OWhiff": .429, "Foul/Sw": .379,
+}
+
+if __name__ == "__main__":
+    rows = {u: run(u) for u in USERS}
+    print(f"{'':10s}" + "".join(f"{u:>9s}" for u in rows) + f"{'목표':>9s}")
+    for k in TARGET:
+        print(f"{k:10s}" + "".join(f"{rows[u][k]:9.3f}" for u in rows) + f"{TARGET[k]:9.3f}")
