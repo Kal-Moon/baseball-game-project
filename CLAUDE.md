@@ -13,7 +13,7 @@
 | 파일 | 내용 |
 | --- | --- |
 | `docs/game-design.md` | 기획 문서. 결정된 내용과 **6장 보류 목록**(아직 정할 것) |
-| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류, `baseball-games-naver.md` 야구 게임 네이버 검색 추이·카페·블로그 평가) |
+| `docs/research/` | 조사 자료 (`pitch-speed.md` 구종별 속도, `pitch-types.md` 구종 종류, `baseball-games-naver.md` 야구 게임 네이버 검색 추이·카페·블로그 평가, `hit-by-pitch.md` 사구, `league-averages.md`·`league-average-2015-2025.md` KBO 리그 평균, `pitch-level.md` 공 단위 기록, `batted-balls.md` 타구 결과) |
 | `CHANGELOG.md` | 날짜별 작업 기록과 다음 작업 |
 | `simulation/baseball_sim.py` | 밸런스 시뮬레이터 v2 (파이썬, 외부 라이브러리 없음, KBO 2026 리그 평균에 맞춤) |
 | `simulation/direct_play_sim.py` | 직접 플레이 한 타석 모델 v1 (공 하나하나 계산, 유저 실력 세 단계) |
@@ -29,7 +29,9 @@
 5. 성장·등급 체계
 6. 10개 구단
 
-## 다음에 할 일 (2026-11-16 기준)
+## 다음에 할 일 (2026-11-17 기준)
+
+0. **브랜치 정리 뒤 확인** (2026-11-17): 작업이 세 갈래로 나뉘어 `claude/sleepy-allen-wp2rds` 기준으로 합침. 다른 줄기에서 정한 것(10개 구단 연고지, AI 팀 성장 70%, 보상 비율, 포스트시즌, 수비 조작, 화면 흐름 등)은 `docs/game-design.md` 6장 맨 앞 "다른 작업 줄기에서 정했지만 아직 반영하지 않은 것"에 있음 → KAL과 하나씩 확인해서 반영할지 정함
 
 타격 조작·투구 조작 세부 설계는 끝남 (투구는 실투 종류, 구종·코스 고르기, 탭 타이밍과 원 크기, 체력 효과 표시, 주자 대응까지 2026-10-05 확정, 3.1절 "투구").
 

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>목업 3차</title>
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: "Noto Sans CJK KR", "Noto Sans KR", sans-serif; color: #1d2433; }
+  .page { width: 900px; padding: 24px 28px 36px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #5b6475; margin-bottom: 18px; }
+  h2 { font-size: 17px; margin: 26px 0 8px; }
+  .phone { position: relative; width: 840px; height: 388px; border-radius: 26px; background: #111; padding: 12px; box-sizing: border-box; }
+  .scr { position: relative; width: 100%; height: 100%; border-radius: 16px; overflow: hidden; }
+  .stadium { background: linear-gradient(#1b2a4a 0 30%, #2f7d3b 30% 100%); }
+  .dirt { position: absolute; left: 50%; top: 52%; width: 420px; height: 260px; transform: translateX(-50%); background: #c98f52; border-radius: 50% 50% 0 0; opacity: .9; }
+  .panel { position: absolute; background: rgba(15,22,38,.82); color: #fff; border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .score b { display: inline-block; width: 44px; }
+  .bases { position: relative; width: 58px; height: 46px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+  .base { position: absolute; width: 14px; height: 14px; transform: rotate(45deg); border: 2px solid #9fb0d0; background: transparent; }
+  .base.on { background: #ffd447; border-color: #ffd447; }
+  .zone { position: absolute; left: 50%; top: 40%; width: 92px; height: 112px; transform: translateX(-50%); border: 2px solid rgba(255,255,255,.85); border-radius: 2px; }
+  .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+  .note { position: absolute; background: #e8453c; color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700; text-align: center; line-height: 20px; }
+  .btn { position: absolute; border-radius: 12px; color: #fff; font-weight: 700; text-align: center; font-size: 14px; }
+  .pitchbtn { position: absolute; right: 14px; width: 136px; height: 40px; border-radius: 10px; background: rgba(15,22,38,.85); color: #fff; font-size: 14px; line-height: 40px; padding: 0 12px; box-sizing: border-box; display: flex; justify-content: space-between; }
+  .pitchbtn.rec { background: #f08a24; box-shadow: 0 0 12px #ffb35c; }
+  .grade { font-weight: 700; color: #9fe0ff; }
+  .rec .grade { color: #fff; }
+  .batter { position: absolute; left: 70px; bottom: 0; width: 150px; height: 230px; background: #2c5fd1; border-radius: 70px 70px 0 0; color: #fff; text-align: center; font-weight: 800; font-size: 40px; padding-top: 70px; box-sizing: border-box; }
+  .caption { font-size: 12.5px; color: #3a4252; line-height: 1.65; margin-top: 8px; }
+  .caption span { display: inline-block; background: #e8453c; color: #fff; border-radius: 50%; width: 17px; height: 17px; font-size: 11px; text-align: center; line-height: 17px; margin-right: 3px; }
+  .flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+  .flow div.box { background: #fff; border: 1.5px solid #c9d0dc; border-radius: 10px; padding: 8px 10px; }
+  .flow div.box.main { border-color: #f08a24; background: #fff6ec; font-weight: 700; }
+  .flow .arr { color: #8a93a3; }
+  .stam { position: absolute; left: 14px; bottom: 64px; width: 150px; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #36b37e 0 70%, #f5c518 70% 90%, #e5484d 90% 100%); }
+  .stam i { position: absolute; top: -4px; left: 76%; width: 3px; height: 20px; background: #fff; }
+  .field { background: #2f7d3b; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>모바일 가로 화면 예시 (3차 초안)</h1>
+  <div class="sub">2026-11-15 · 3.1절·3.6절·3.7절에서 정한 배치. 그림체·색은 임시 (그림 작업에서 정함).</div>
+
+  <h2>전체 흐름</h2>
+  <div class="flow">
+    <div class="box">타이틀</div><span class="arr">→</span>
+    <div class="box">튜토리얼<br><small>타격 1타석·투구 1타자</small></div><span class="arr">→</span>
+    <div class="box">구단 고르기<br><small>10개 중 하나</small></div><span class="arr">→</span>
+    <div class="box">집중 육성 선수</div><span class="arr">→</span>
+    <div class="box main">홈 → [경기하기]</div><span class="arr">→</span>
+    <div class="box">직접 / 하이라이트 / 자동</div><span class="arr">→</span>
+    <div class="box main">경기 (타석 · 마운드 · 필드)</div><span class="arr">→</span>
+    <div class="box">결과 → 다음 경기</div>
+  </div>
+  <div class="caption">홈에서 경기까지 탭 두 번. 육성 주기 끝(예: 10경기)·시즌 끝(순위 → 포스트시즌 → 시상 → 신인 드래프트)은 결과 화면 뒤에 끼어듦.</div>
+
+  <h2>화면 1. 타석 (내가 칠 때)</h2>
+  <div class="phone"><div class="scr stadium">
+    <div class="dirt"></div>
+    <div class="panel score" style="left:12px;top:12px;">
+      <div><b>블루</b>2 &nbsp; <b>레드</b>1 &nbsp; 7회말</div>
+      <div style="margin-top:4px;">볼 1 · 스트 2 · 아웃 ●○
+        <span class="bases"><span class="base on" style="left:38px;top:16px"></span><span class="base on" style="left:20px;top:0"></span><span class="base" style="left:2px;top:16px"></span></span>
+      </div>
+    </div>
+    <div class="note" style="left:4px;top:4px;">1</div>
+    <div class="panel" style="right:12px;top:12px;width:200px;">
+      <div>레드 #11 · 투구 수 87</div>
+      <div style="margin-top:4px;color:#cfd8ea;">포심 ↑ · 슬라이더 ← · 커브 ↙ · 스플리터 ↓</div>
+    </div>
+    <div class="note" style="right:220px;top:4px;">2</div>
+    <div class="zone"></div>
+    <div class="dot" style="left:468px;top:248px;"></div>
+    <div class="note" style="left:520px;top:150px;">3</div>
+    <div class="panel" style="left:50%;top:118px;transform:translateX(-50%);">늦음 ▶ · 포심 150km/h</div>
+    <div class="note" style="left:560px;top:110px;">4</div>
+    <div class="batter">4</div>
+    <div class="panel" style="left:12px;bottom:12px;">4번 한도윤 · 오늘 1타수 1안타</div>
+    <div class="btn" style="right:16px;bottom:16px;width:76px;height:76px;border-radius:50%;background:#4b5568;line-height:76px;">번트</div>
+    <div class="note" style="right:96px;bottom:84px;">5</div>
+  </div></div>
+  <div class="caption"><span>1</span>점수·카운트·<b>주자 패널</b>(미니 베이스): 주자를 탭하면 그 주자만 도루·진루. <span>2</span>상대 투수와 <b>구종 목록</b>(던지기 전 구종은 알려주지 않음). <span>3</span>존은 <b>테두리만</b>, 공이 지나간 자리 1초. <span>4</span>투구 뒤 한 줄(타이밍 + 구종·구속). <span>5</span>버튼은 [번트] 하나. 스윙은 화면 아무 곳 스와이프(탭 = 레벨, 위 = 어퍼, 아래 = 다운, 좌우 = 당겨치기·밀어치기). 조준점·[스윙] 버튼은 없음.</div>
+
+  <h2>화면 2. 마운드 (내가 던질 때)</h2>
+  <div class="phone"><div class="scr stadium">
+    <div class="dirt"></div>
+    <div class="panel score" style="left:12px;top:12px;">
+      <div><b>블루</b>2 &nbsp; <b>레드</b>1 &nbsp; 8회초</div>
+      <div style="margin-top:4px;">볼 2 · 스트 1 · 아웃 ○○
+        <span class="bases"><span class="base on" style="left:38px;top:16px"></span><span class="base" style="left:20px;top:0"></span><span class="base" style="left:2px;top:16px"></span></span>
+      </div>
+      <div style="margin-top:4px;color:#cfd8ea;">1루 김주루 · 주루 72</div>
+    </div>
+    <div class="note" style="left:4px;top:4px;">1</div>
+    <div class="zone" style="left:44%;"></div>
+    <div style="position:absolute;left:calc(44% + 4px);top:58%;width:70px;height:70px;margin-left:-35px;margin-top:-35px;border:3px solid #ffd447;border-radius:50%;"></div>
+    <div style="position:absolute;left:calc(44% + 22px);top:62%;width:26px;height:20px;background:#8b5a2b;border-radius:10px 10px 4px 4px;"></div>
+    <div class="note" style="left:44%;top:30%;margin-left:56px;">2</div>
+    <div class="pitchbtn rec" style="top:40px;"><span>포심</span><span class="grade">B</span></div>
+    <div class="pitchbtn" style="top:88px;"><span>슬라이더</span><span class="grade">S</span></div>
+    <div class="pitchbtn" style="top:136px;"><span>커브</span><span class="grade">C</span></div>
+    <div class="pitchbtn" style="top:184px;"><span>스플리터</span><span class="grade">A</span></div>
+    <div class="note" style="right:156px;top:40px;">3</div>
+    <div class="stam"><i></i></div>
+    <div class="panel" style="left:14px;bottom:82px;padding:2px 6px;font-size:11px;">체력</div>
+    <div class="note" style="left:170px;bottom:58px;">4</div>
+    <div class="btn" style="left:14px;bottom:14px;width:96px;height:38px;line-height:38px;background:#4b5568;">고의사구</div>
+    <div class="note" style="left:114px;bottom:24px;">5</div>
+  </div></div>
+  <div class="caption"><span>1</span>주자 패널: 주자를 탭하면 견제(타석당 3번). <span>2</span>존 + 조준 원 + 포수 미트(추천 위치). 구종을 탭하고 끌어서 조준, 손을 떼면 투구. 조준 중에만 타자 핫·콜드존. <span>3</span>구종 버튼 세로, 이름 + <b>구종 등급</b>. 포수 추천 구종은 빛남(따라도 보너스 없음). <span>4</span>체력 막대(초록 → 노랑 70% → 빨강 90% 교체 권유). <span>5</span>[고의사구](공을 던지지 않음).</div>
+
+  <h2>화면 3. 필드 (인플레이 · 주루 · 수비)</h2>
+  <div class="phone"><div class="scr field">
+    <div style="position:absolute;left:50%;top:-180px;width:760px;height:760px;margin-left:-380px;border-radius:50%;background:#3a8f46;"></div>
+    <div style="position:absolute;left:50%;top:150px;width:240px;height:240px;margin-left:-120px;transform:rotate(45deg);background:#c98f52;"></div>
+    <div class="panel score" style="left:12px;top:12px;">
+      <span class="bases" style="width:80px;height:60px;margin:0"><span class="base on" style="left:56px;top:24px;width:18px;height:18px"></span><span class="base" style="left:31px;top:2px;width:18px;height:18px"></span><span class="base" style="left:6px;top:24px;width:18px;height:18px"></span><span class="base" style="left:31px;top:44px;width:18px;height:18px;border-color:#fff"></span></span>
+    </div>
+    <div class="note" style="left:4px;top:4px;">1</div>
+    <div style="position:absolute;left:300px;top:64px;width:46px;height:46px;border:3px solid #ffd447;border-radius:50%;"></div>
+    <div style="position:absolute;left:316px;top:80px;width:14px;height:14px;border-radius:50%;background:rgba(0,0,0,.35);"></div>
+    <div style="position:absolute;left:330px;top:40px;width:10px;height:10px;border-radius:50%;background:#fff;"></div>
+    <div style="position:absolute;left:280px;top:110px;width:16px;height:16px;border-radius:50%;background:#2c5fd1;border:2px solid #fff;"></div>
+    <div class="note" style="left:352px;top:56px;">2</div>
+    <div class="btn" style="left:50%;bottom:18px;margin-left:-60px;width:120px;height:44px;line-height:44px;background:#f08a24;">수비</div>
+    <div class="note" style="left:50%;bottom:52px;margin-left:66px;">3</div>
+    <div class="panel" style="right:12px;top:12px;">1.5배속 · 탭하면 건너뜀</div>
+  </div></div>
+  <div class="caption"><span>1</span>미니 베이스: 타석·마운드의 주자 패널과 <b>같은 자리·같은 모양</b>. 주루(추가 진루·귀루·태그업)와 수비 때 송구할 베이스를 여기서 탭. <span>2</span>수비 기회: 야수는 자동으로 뛰어가고, 공 그림자 위 <b>줄어드는 원</b>이 가장 작을 때 탭해서 잡음(투구 원 타이밍과 같은 감각). <span>3</span>기회가 오면 화면이 잠깐 느려지고 [수비] 1.5초. 안 누르면 능력치로 자동.</div>
+</div>
+</body>
+</html>
