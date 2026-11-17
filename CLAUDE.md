@@ -72,7 +72,7 @@
   - **막힘**: `www.mlb.com`, `statsapi.mlb.com`, `fangraphs.com`, `baseball-reference.com`, `wikipedia.org`, `kaggle.com`, `huggingface.co`, `statiz.sporki.com`, `google.com` 등 목록에 없는 곳 모두
   - 웹 검색은 된다. 더 필요하면 KAL에게 허용 도메인 추가를 부탁한다.
   - **Godot**: `https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip` 받아짐 (2026-11-16, 파일은 release-assets.githubusercontent.com에서 옴). 컨테이너가 새로 뜨면 다시 받아야 함 (`/home/user/tools/godot/`에 풀어 `--headless`로 실행). `dl.google.com`(안드로이드 SDK)은 2026-11-17 접속·내려받기 확인.
-  - **APK 만들기**: `bash prototype/batting/tools/build_apk.sh <버전>` 하나로 도구 받기(내보내기 파일 1.3GB 포함, 약 5분)·서명·내보내기·`builds/`에 복사까지 함. 시험용 서명 키는 `/home/user/tools/keys/`(저장소 밖)라 컨테이너가 새로 뜨면 키가 바뀜 → 그때는 폰에서 앞 버전을 지우고 설치해야 함. `export_presets.cfg`에는 비밀번호를 넣지 않음.
+  - **APK 만들기**: `bash prototype/batting/tools/build_apk.sh <버전>` 하나로 도구 받기(내보내기 파일 1.3GB 포함, 약 5분)·서명·내보내기·`builds/`에 복사까지 함. 시험용 서명 키는 **저장소에 고정** (`prototype/batting/keys/debug.keystore`, KAL 2026-11-17) → 새 버전을 폰에 덮어 설치할 수 있음. 정식 출시용 키는 따로 만들고 저장소에 넣지 않음. `export_presets.cfg`에는 비밀번호를 넣지 않음.
 - **네이버 데이터랩(검색어 트렌드) API 규칙** (KAL, 2026-11-16)
   - 지금 요금은 "한시적 무료"가 섞여 있고 바뀔 수 있다. **날짜가 바뀌면(새날 첫 호출 전) 반드시 다시 확인**하고, 무료 범위까지만 돌린다 (KAL, 2026-11-16).
   - 부를 때마다 **먼저 요금 페이지를 열어 무료 범위를 확인**한다: https://www.ncloud.com/product/applicationService/naverApiHub#pricing . 페이지를 못 열면 호출하지 않는다.

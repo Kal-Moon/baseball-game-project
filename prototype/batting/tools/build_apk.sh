@@ -2,14 +2,13 @@
 # 타격 시험판 APK 만들기 (클라우드 컨테이너용). 컨테이너가 새로 뜨면 도구를 다시 받음.
 # 사용: bash prototype/batting/tools/build_apk.sh <버전 이름, 예: 0.2>
 # 받는 것: Godot 4.7.2(약 60MB), 내보내기 파일(약 1.3GB, GitHub), 안드로이드 SDK 일부(dl.google.com)
-# 서명: 시험용 디버그 키를 /home/user/tools/keys 에 만듦 (저장소에 넣지 않음).
-#   키가 바뀌면 폰에서 앞 버전을 지우고 설치해야 함.
+# 서명: 저장소의 시험용 키 keys/debug.keystore (고정, 2026-11-17). 정식 출시에는 쓰지 않음.
 set -euo pipefail
 VER="${1:?버전 이름을 주세요 (예: 0.2)}"
 T=/home/user/tools
 PROJ="$(cd "$(dirname "$0")/.." && pwd)"
 G=$T/godot/Godot_v4.7.2-stable_linux.x86_64
-mkdir -p $T/godot $T/dl $T/keys
+mkdir -p $T/godot $T/dl
 [ -x "$G" ] || { curl -sSL -o $T/dl/godot.zip https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip && unzip -qo $T/dl/godot.zip -d $T/godot; }
 TPL=~/.local/share/godot/export_templates/4.7.2.stable
 if [ ! -f $TPL/android_debug.apk ]; then
@@ -22,9 +21,7 @@ if [ ! -x $SDK/build-tools/35.0.0/apksigner ]; then
   mkdir -p $SDK/cmdline-tools && unzip -qo $T/dl/cmdtools.zip -d $SDK/cmdline-tools && mv $SDK/cmdline-tools/cmdline-tools $SDK/cmdline-tools/latest
   yes | $SDK/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK "platform-tools" "build-tools;35.0.0" "platforms;android-35" >/dev/null
 fi
-KS=$T/keys/debug.keystore
-[ -f $KS ] || keytool -genkeypair -keystore $KS -storepass android -alias androiddebugkey -keypass android \
-  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+KS="$PROJ/keys/debug.keystore"     # 저장소에 고정한 시험용 키 (keys/README.md)
 JH=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
 mkdir -p ~/.config/godot
 cat > ~/.config/godot/editor_settings-4.7.tres <<EOS
