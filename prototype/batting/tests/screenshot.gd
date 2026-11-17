@@ -1,6 +1,6 @@
 ## 2단계 확인용 스크린샷 (화면이 있어야 함: 클라우드에서는 xvfb-run).
 ## 실행: xvfb-run -s "-screen 0 1280x720x24" godot --path prototype/batting --script res://tests/screenshot.gd -- <저장 폴더>
-## ① 공이 날아오는 중 ② 투구 뒤 표시 ③ 구종 11개 회전 그림 모음
+## ① 공이 날아오는 중 ② 투구 뒤 표시 ③ 구종 11개 회전 그림 모음 ④ 배트 스윙 + 맞은 순간 번쩍임
 extends SceneTree
 
 const AtBat := preload("res://ui/at_bat.gd")
@@ -51,16 +51,22 @@ func _process(_dt: float) -> bool:
 			scene._input(down)
 			var up := InputEventScreenTouch.new(); up.pressed = false; up.position = Vector2(500, 505)
 			scene._input(up)
+			scene.contact = "strong"                 # 반응 그림 확인용으로 강한 타구로 고정
+			scene.flash_start = scene.flight.arrive_usec
+			scene.fake_now = scene.flight.arrive_usec + 60_000
+			scene.queue_redraw()
+		2:
+			_save("2-4_swing_contact.png")
 			scene.fake_now = scene.flight.arrive_usec + 250_000
 			scene.tick()
 			scene.queue_redraw()
-		2:
+		3:
 			_save("2-2_after_pitch.png")
 			scene.queue_free()
 			var sheet := SpinSheet.new()
 			sheet.t = 0.03
 			root.add_child(sheet)
-		3:
+		4:
 			_save("2-3_spin_sheet.png")
 			quit()
 	step += 1

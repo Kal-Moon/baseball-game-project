@@ -71,6 +71,23 @@ func _init() -> void:
 	scene._input(drag)
 	ok(scene.swing == "어퍼", "끌어올리는 중에 어퍼로 정해짐 (나옴 %s)" % scene.swing)
 	ok(scene.level == -1, "20ms 일찍 = 좋음(빠른 쪽) (나옴 %s)" % str(scene.level))
+	ok(scene.bat_start >= 0 and scene.bat_swing == "어퍼", "배트가 어퍼로 휘둘러짐")
+	ok(scene.contact in ["", "foul", "weak", "normal", "strong"], "맞았는지 판정 (나옴 %s)" % scene.contact)
+	# 반응 통계: 완벽 타이밍 + 가운데 공은 대부분 맞아야 함
+	var hits := 0
+	for i in 200:
+		scene.throw_pitch("포심", {"x": 0.0, "y": 0.0, "kind": "normal"})
+		scene.fake_now = scene.flight.arrive_usec
+		scene._input(down)
+		var up0 := InputEventScreenTouch.new(); up0.pressed = false; up0.position = Vector2(640, 500)
+		scene._input(up0)
+		if scene.contact != "": hits += 1
+	ok(hits > 180, "완벽 타이밍 200번 중 맞음 %d번 (180번 넘어야 함)" % hits)
+	scene.throw_pitch("포심", {"x": 0.0, "y": 0.0, "kind": "normal"})
+	arr = scene.flight.arrive_usec
+	scene.fake_now = arr - 20_000
+	scene._input(down)
+	scene._input(drag)
 	scene.fake_now = arr + 300_000
 	scene.tick()
 	ok(scene.state == scene.State.SHOW, "투구 뒤 표시 단계로 넘어감")

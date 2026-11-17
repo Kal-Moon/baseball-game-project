@@ -31,6 +31,12 @@ var swing := ""                         # 비어 있으면 아직 스윙 종류 
 var level = null                        # 7단계, null = 스윙 안 함/무시
 var last_text := ""
 var last_sub := ""
+# 스윙 반응 (확인용 최소 연출: 배트 도형 + 맞으면 번쩍임·진동)
+const BAT_MS := 180.0                   # 배트 휘두르는 시간
+var bat_start := -1                     # usec, -1 = 안 휘두름
+var bat_swing := ""
+var contact := ""                       # "" 헛스윙/없음, foul / weak / normal / strong
+var flash_start := -1
 
 ## 테스트용: 시각을 밖에서 넣을 수 있게 (null이면 실제 시각)
 var fake_now = null
@@ -77,6 +83,9 @@ func throw_pitch(p_name: String, loc: Dictionary) -> void:
 	touch_usec = -1
 	swing = ""
 	level = null
+	bat_start = -1
+	contact = ""
+	flash_start = -1
 	state = State.FLIGHT
 
 
@@ -99,6 +108,8 @@ func on_touch_down(pos: Vector2, t_usec: int) -> void:
 		return
 	touch_usec = t_usec
 	touch_pos = pos
+	bat_start = t_usec                     # 배트는 손가락이 닿자마자 출발 (종류는 곧 정해짐)
+	bat_swing = "레벨"
 
 
 func on_drag(pos: Vector2) -> void:
@@ -115,6 +126,22 @@ func on_touch_up(pos: Vector2) -> void:
 func _decide_swing(pos: Vector2) -> void:
 	swing = input.classify_swipe(pos - touch_pos, _screen_h(), right_batter)
 	level = input.timing_level(touch_usec, flight.arrive_usec, swing)
+	bat_swing = swing
+	_judge_contact()
+
+
+## 맞았는지만 정해 반응을 보여 줌 (결과 글자·안타 판정은 4단계). 1단계 계산 모델 그대로.
+func _judge_contact() -> void:
+	contact = ""
+	if level == null:
+		return
+	var zone := Model.in_zone(flight.target.x, flight.target.y)
+	var c := input.compat(flight.target.x, flight.target.y, swing)
+	var res: String = model.resolve_swing(SwingInput.grade(level), zone, flight.kind, c, false)[0]
+	if res != "whiff":
+		contact = res
+		flash_start = maxi(now(), flight.arrive_usec)   # 번쩍임은 공이 배트에 닿는 순간에
+		Input.vibrate_handheld(60 if res == "strong" else 30)
 
 
 func _screen_h() -> float:
@@ -125,6 +152,8 @@ func _finish_pitch() -> void:
 	if touch_usec >= 0 and swing == "":
 		swing = "레벨"                       # 손을 안 뗀 채 끝나면 탭으로
 		level = input.timing_level(touch_usec, flight.arrive_usec, swing)
+		bat_swing = swing
+		_judge_contact()
 	var pitch_info := "%s %dkm/h" % [flight.name, flight.kmh]
 	if level == null:
 		var zone := Model.in_zone(flight.target.x, flight.target.y)
@@ -172,8 +201,10 @@ func _draw() -> void:
 
 	if state == State.FLIGHT:
 		var p := flight.progress(now())
-		if p < 1.0:
+		if p < 1.0 and not (contact != "" and now() >= flash_start):
 			_draw_ball(p)
+	_draw_bat()
+	_draw_flash()
 	if state == State.SHOW:
 		# 공이 지나간 자리 (3.1절)
 		draw_circle(zone_to_screen(flight.target), 9, Color(1, 0.85, 0.2, 0.9))
@@ -183,6 +214,42 @@ func _draw() -> void:
 		draw_string(font, Vector2(0, 122), last_sub, HORIZONTAL_ALIGNMENT_CENTER, 1280, 24, Color(1, 1, 1, 0.8))
 	var info := ThemeDB.fallback_font
 	draw_string(info, Vector2(16, 30), "타격 시험판 2단계 · 탭=레벨  위=어퍼  아래=다운  ←=당겨치기  →=밀어치기 (우타자)", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
+
+
+## 배트: 타자 손에서 나와 존을 가로지르는 막대. 스윙 종류마다 높이 변화가 다름.
+## 어퍼 = 아래에서 위로, 다운 = 위에서 아래로, 당겨치기 = 빨리 돌아 왼쪽에서 끝남, 밀어치기 = 늦게 끝까지.
+func _draw_bat() -> void:
+	if bat_start < 0:
+		return
+	var t := float(now() - bat_start) / (BAT_MS * 1000.0)
+	if t < 0.0 or t > 1.6:
+		return
+	t = minf(t, 1.0)
+	var hands := Vector2(505, clampf(zone_to_screen(flight.target).y, 380.0, 580.0))   # 배트는 공 높이로 (방향형, 커서 없음)
+	var dy := {"레벨": [0.0, 0.0], "어퍼": [70.0, -70.0], "다운": [-70.0, 70.0], "당겨치기": [0.0, 0.0], "밀어치기": [0.0, 0.0]}
+	var reach := {"레벨": 300.0, "어퍼": 300.0, "다운": 300.0, "당겨치기": 230.0, "밀어치기": 360.0}
+	var e := 1.0 - pow(1.0 - t, 2.0)                 # 빨라졌다가 끝에서 느려짐
+	var d: Array = dy[bat_swing]
+	var tip := hands + Vector2(lerpf(-110.0, float(reach[bat_swing]), e), lerpf(d[0], d[1], e))
+	var hand_now := hands + Vector2(lerpf(-20.0, 30.0, e), lerpf(d[0], d[1], e) * 0.3)
+	draw_line(hand_now, tip, Color("#c89b5a"), 9.0)
+	draw_circle(tip, 5.5, Color("#c89b5a"))
+
+
+## 맞았을 때 번쩍임 (강한 타구일수록 크게)
+func _draw_flash() -> void:
+	if contact == "" or flash_start < 0:
+		return
+	var t := float(now() - flash_start) / 250000.0
+	if t < 0.0 or t > 1.0:
+		return
+	var size: float = {"foul": 30.0, "weak": 35.0, "normal": 50.0, "strong": 75.0}[contact]
+	var c := Color(1, 1, 0.75, 1.0 - t)
+	var pos := zone_to_screen(flight.target)
+	draw_circle(pos, size * (0.5 + t), Color(1, 1, 1, 0.35 * (1.0 - t)))
+	for k in 8:
+		var dir := Vector2.RIGHT.rotated(TAU * k / 8.0 + 0.3)
+		draw_line(pos + dir * size * 0.4, pos + dir * size * (0.8 + t), c, 4.0)
 
 
 func _draw_ball(p: float) -> void:
