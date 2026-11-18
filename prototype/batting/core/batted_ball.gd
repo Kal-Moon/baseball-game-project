@@ -19,7 +19,7 @@ static func angle(swing: String, level: int, rng: RandomNumberGenerator, right_b
 static func field_part(a: float) -> String:
 	if a < -27.0: return "좌측"
 	if a < -9.0: return "좌중간"
-	if a <= 9.0: return "중앙"
+	if a <= 9.0: return "가운데"
 	if a <= 27.0: return "우중간"
 	return "우측"
 
@@ -32,7 +32,7 @@ static func describe(outcome: String, quality: String, swing: String, a: float, 
 	var fly := true          # 뜬공(포물선) / 땅볼(직선)
 	match outcome:
 		"HR":
-			text = "%s 홈런" % ("가운데 담장 넘는" if part == "중앙" else part); dist = 1.15
+			text = "%s 홈런" % ("가운데 담장 넘는" if part == "가운데" else part); dist = 1.15
 		"3B":
 			text = "%s 3루타" % part; dist = 0.95
 		"2B":

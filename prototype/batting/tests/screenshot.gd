@@ -13,6 +13,33 @@ var step := 0
 var frames := 0
 
 
+## 구종별 공 길 (변화 크기 2배, 같은 도착 위치). 점 = 같은 시간 간격 (빽빽할수록 느림)
+class PathSheet extends Node2D:
+	func _draw() -> void:
+		draw_rect(Rect2(0, 0, 1280, 720), Color("#2f6b3a"))
+		var font := ThemeDB.fallback_font
+		var Flight = load("res://core/pitch_flight.gd")
+		var names := ["포심", "커브", "슬라이더", "스위퍼", "스플리터", "체인지업"]
+		for i in names.size():
+			var f = Flight.new()
+			f.setup(names[i], {"x": 0.0, "y": -0.2, "kind": "normal"}, 650.0, 0, 50.0, 50.0, 0.0, 1.0, 2.0)
+			# 구종마다 칸 하나 (화면을 0.55배로 줄여서 6칸)
+			var off := Vector2(-170 + (i % 3) * 420, -40 + (i / 3) * 340)
+			draw_set_transform(off, 0.0, Vector2(0.55, 0.55))
+			var tl := AtBat.zone_to_screen(Vector2(-1, 1))
+			draw_rect(Rect2(tl, AtBat.ZONE_H * 2.0), Color(1, 1, 1, 0.8), false, 3.0)
+			var steps := int(f.travel_ms / 33.0)
+			for k in steps + 1:
+				var pp := float(k) / steps
+				var q := AtBat.persp(pp)
+				# 회색 = 처음 향하던 곳으로 곧게 갔다면
+				draw_circle(AtBat.RELEASE.lerp(AtBat.zone_to_screen(f.target - f.move), q), 3.0, Color(1, 1, 1, 0.3))
+				draw_circle(f.screen_pos(pp, AtBat.RELEASE, AtBat.zone_to_screen, q), 3.0 + 8.0 * q, Color("#ffe066"))
+			draw_string(font, Vector2(560, 650), "%s %dkm/h %dms" % [names[i], f.kmh, roundi(f.travel_ms)], HORIZONTAL_ALIGNMENT_LEFT, -1, 40, Color.WHITE)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_string(font, Vector2(0, 30), "구종별 공 길 (노랑 = 실제, 회색 = 휘지 않았다면, 변화 크기 2배, 점 사이 1/30초)", HORIZONTAL_ALIGNMENT_CENTER, 1280, 22, Color.WHITE)
+
+
 class SpinSheet extends Node2D:
 	var t := 0.0
 	func _draw() -> void:
@@ -93,6 +120,10 @@ func _process(_dt: float) -> bool:
 			scene.queue_redraw()
 		6:
 			_save("4-2_panel.png")
+			scene.queue_free()
+			root.add_child(PathSheet.new())
+		7:
+			_save("4-3_pitch_paths.png")
 			quit()
 	step += 1
 	frames = 0

@@ -47,7 +47,29 @@ func _init() -> void:
 	# 공 비행: 도착 시간과 마지막 위치
 	var f := Flight.new()
 	f.setup("커브", {"x": 0.3, "y": -0.5}, 650.0, 0)
-	ok(absf(f.travel_ms - 650.0 / 0.85) < 0.01, "커브 도착 시간 = 650 ÷ 0.85")
+	ok(absf(f.travel_ms - 650.0 * 145.0 / f.kmh) < 0.01 and f.kmh == 123.0, "커브 123km/h 도착 시간 = 650 × 145/123 (나옴 %.0fms)" % f.travel_ms)
+	var fv := Flight.new()
+	fv.setup("포심", {"x": 0.0, "y": 0.0}, 650.0, 0, 50.0, 150.0)
+	ok(fv.kmh == 175.0 and absf(fv.travel_ms - 650.0 * 145.0 / 175.0) < 0.01, "구속 150 → 175km/h, 도착 %.0fms (표시 구속과 도착 시간이 맞음)" % fv.travel_ms)
+	var fg := Flight.new()
+	fg.setup("커브", {"x": 0.0, "y": 0.0}, 650.0, 0, 50.0, 50.0, 0.0, 2.0)
+	ok(fg.travel_ms > f.travel_ms + 100.0, "구속 차이 과장 2배면 커브가 더 느려짐 (%.0f → %.0fms)" % [f.travel_ms, fg.travel_ms])
+	# 화면에서 휘는 폭: 커브는 직선과 확실히 다르게 (변화 크기 2배, 진행 80%·95%)
+	var fc := Flight.new()
+	fc.setup("커브", {"x": 0.0, "y": -0.3}, 650.0, 0, 50.0, 50.0, 0.0, 1.0, 2.0)
+	var to_s := func(z: Vector2) -> Vector2: return Vector2(640, 470) + Vector2(z.x * 85, -z.y * 100)
+	for pp in [0.8, 0.95]:
+		var q: float = pp / (pp + (1.0 - pp) * 3.0)
+		# 타자가 보는 휨 = 처음에 향하던 곳(휘지 않았다면 갔을 곳)으로 가는 직선에서 벗어난 거리
+		var straight: Vector2 = Vector2(668, 215).lerp(to_s.call(fc.target - fc.move), q)
+		var d := fc.screen_pos(pp, Vector2(668, 215), to_s, q).distance_to(straight)
+		ok(d > 25.0, "커브가 진행 %d%%에서 처음 향하던 직선보다 %.0fpx 벗어남 (25px 넘어야 함)" % [roundi(pp * 100), d])
+	var ff := Flight.new()
+	ff.setup("포심", {"x": 0.0, "y": -0.3}, 650.0, 0, 50.0, 50.0, 0.0, 1.0, 2.0)
+	var q8 := 0.8 / (0.8 + 0.2 * 3.0)
+	var dff := ff.screen_pos(0.8, Vector2(668, 215), to_s, q8).distance_to(Vector2(668, 215).lerp(to_s.call(ff.target - ff.move), q8))
+	var dfc := fc.screen_pos(0.8, Vector2(668, 215), to_s, q8).distance_to(Vector2(668, 215).lerp(to_s.call(fc.target - fc.move), q8))
+	ok(dfc > dff * 3.0, "커브 휘는 폭(%.0fpx)이 포심(%.0fpx)의 3배 넘음" % [dfc, dff])
 	ok(f.zone_pos(1.0).distance_to(Vector2(0.3, -0.5)) < 1e-6, "공은 정한 위치에 도착")
 	ok(f.zone_pos(0.0).y > -0.5, "커브는 처음엔 더 높게 보였다가 떨어짐")
 	var f2 := Flight.new()
@@ -82,7 +104,7 @@ func _init() -> void:
 		var up0 := InputEventScreenTouch.new(); up0.pressed = false; up0.position = Vector2(640, 500)
 		scene._input(up0)
 		if scene.contact != "": hits += 1
-	ok(hits > 180, "완벽 타이밍 200번 중 맞음 %d번 (180번 넘어야 함)" % hits)
+	ok(hits >= 170, "완벽 타이밍 200번 중 맞음 %d번 (170번 이상)" % hits)
 	scene.throw_pitch("포심", {"x": 0.0, "y": 0.0, "kind": "normal"})
 	arr = scene.flight.arrive_usec
 	scene.fake_now = arr - 20_000

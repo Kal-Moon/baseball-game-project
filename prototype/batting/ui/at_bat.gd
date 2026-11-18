@@ -14,8 +14,8 @@ const Batted := preload("res://core/batted_ball.gd")
 ## 화면 배치 (1280×720 기준)
 const ZONE_C := Vector2(640, 470)
 const ZONE_H := Vector2(85, 100)        # 존 반폭·반높이 (px)
-const RELEASE := Vector2(668, 215)      # 투수 손 위치
-const PERSP := 3.0                      # 원근 정도 (클수록 마지막에 확 커짐)
+const RELEASE := Vector2(668, 318)      # 투수 손 위치. 215 → 318 (2026-11-18: 손이 존보다 너무 높으면 공이 원래 위에서 내려오는 길에 "떨어지는 변화"가 묻힘)
+const PERSP := 1.8                      # 원근 정도 (클수록 마지막에 확 커짐). 3.0 → 1.8 (2026-11-18: 3이면 공이 마지막 10% 시간에 화면 길의 25%를 가서 구종 차이가 안 보였음)
 
 enum State { WAIT, WINDUP, FLIGHT, SHOW }
 
@@ -26,6 +26,9 @@ var state := State.WAIT
 var state_until := 0                    # usec
 var base_ms := 650.0                    # 포심(구속 50) 도착 시간 (조절판, 시작 650ms, 4.1절)
 var difficulty := "보통"
+## 2026-11-18 KAL 피드백 뒤 추가 (조절판): 화면의 휘는 크기 배율, 속도 차이 과장
+var break_scale := 2.0                  # 시작값 2배 ★ (1배는 커브가 존 높이의 약 1/4만 떨어짐)
+var speed_gamma := 1.0                  # 1 = 도착 시간이 구속에 정비례
 const DIFF_MS := {"쉬움": 800.0, "보통": 650.0, "어려움": 500.0}   # 4.1절 "난이도"
 ## 능력치 (조절판). 타자: eye 선구 · con 정확 · pw 파워 / 투수: vel 구속 · brk 변화 · st 구위 · ctl 제구
 var stats := {"eye": 50, "con": 50, "pw": 50, "vel": 50, "brk": 50, "st": 50, "ctl": 50}
@@ -37,7 +40,7 @@ var hit_info := {}                      # 이번 인플레이 타구 (글자·�
 var show_start := 0
 ## 조절판
 const PANEL_BTN := Rect2(1040, 98, 224, 46)
-const PANEL := Rect2(220, 70, 840, 590)
+const PANEL := Rect2(220, 20, 840, 680)
 var panel_open := false
 var right_batter := true
 var pitcher: AiPitcher
@@ -126,14 +129,14 @@ func start_new_pa() -> void:
 	pitcher.new_pitcher()
 
 
-## 실제 도착 시간에 능력치를 넣음 (4.1절 표): 선구 × (1 + 느려짐), 구속 +20 → −5%
+## 이 투수 포심의 실제 도착 시간 (조절판 표시·테스트용). 도착 시간 = 표시 구속으로 계산 (pitch_flight.travel_time)
 func effective_base_ms() -> float:
-	var v := clampf(float(stats["vel"]) - 50.0, -40.0, 20.0)
-	return base_ms * (1.0 + model.slow) * (1.0 - 0.05 * v / 20.0)
+	var kmh := roundf(145.0 + (float(stats["vel"]) - 50.0) * 0.3)
+	return Flight.travel_time(base_ms, kmh, model.slow, speed_gamma)
 
 
 func throw_pitch(p_name: String, loc: Dictionary) -> void:
-	flight.setup(p_name, loc, effective_base_ms(), now(), float(stats["brk"]), float(stats["vel"]))
+	flight.setup(p_name, loc, base_ms, now(), float(stats["brk"]), float(stats["vel"]), model.slow, speed_gamma, break_scale)
 	touch_usec = -1
 	swing = ""
 	level = null
@@ -286,16 +289,16 @@ static func persp(p: float) -> float:
 
 func _draw() -> void:
 	# 배경: 외야 쪽 하늘·잔디, 마운드
-	draw_rect(Rect2(0, 0, 1280, 300), Color("#20344f"))
-	draw_rect(Rect2(0, 300, 1280, 420), Color("#2f6b3a"))
-	draw_circle(Vector2(668, 250), 46, Color("#8a6a45"))
+	draw_rect(Rect2(0, 0, 1280, 330), Color("#20344f"))
+	draw_rect(Rect2(0, 330, 1280, 390), Color("#2f6b3a"))
+	draw_circle(Vector2(668, 342), 32, Color("#8a6a45"))
 	# 투수 (도형)
 	var arm := 0.0
 	if state == State.WINDUP:
 		arm = 1.0 - float(state_until - now()) / 600000.0
-	draw_rect(Rect2(656, 175, 24, 60), Color("#d9d9d9"))
-	draw_circle(Vector2(668, 166), 10, Color("#d9d9d9"))
-	draw_line(Vector2(676, 185), Vector2(676, 185) + Vector2(14, -18).rotated(arm * 2.5), Color("#d9d9d9"), 5)
+	draw_rect(Rect2(656, 278, 24, 60), Color("#d9d9d9"))
+	draw_circle(Vector2(668, 269), 10, Color("#d9d9d9"))
+	draw_line(Vector2(676, 288), Vector2(676, 288) + Vector2(14, -18).rotated(arm * 2.5), Color("#d9d9d9"), 5)
 	# 홈플레이트
 	draw_colored_polygon(PackedVector2Array([Vector2(600, 640), Vector2(680, 640), Vector2(680, 660), Vector2(640, 685), Vector2(600, 660)]), Color("#eeeeee"))
 	# 우타자 뒷모습 (반투명, 왼쪽)
@@ -368,18 +371,18 @@ func _draw_field(font: Font) -> void:
 ## ---- 조절판 (4.1절: 능력치 값을 바꿔 결과 확인, 공 도착 시간, 난이도) ----
 
 func _row_rect(i: int) -> Rect2:
-	return Rect2(PANEL.position + Vector2(30, 70 + i * 50), Vector2(PANEL.size.x - 60, 44))
+	return Rect2(PANEL.position + Vector2(30, 58 + i * 46), Vector2(PANEL.size.x - 60, 42))
 
 
 func _minus_rect(i: int) -> Rect2:
-	var r := _row_rect(i); return Rect2(r.position + Vector2(380, 0), Vector2(70, 44))
+	var r := _row_rect(i); return Rect2(r.position + Vector2(380, 0), Vector2(70, 42))
 
 
 func _plus_rect(i: int) -> Rect2:
-	var r := _row_rect(i); return Rect2(r.position + Vector2(580, 0), Vector2(70, 44))
+	var r := _row_rect(i); return Rect2(r.position + Vector2(580, 0), Vector2(70, 42))
 
 
-## 행: 0~6 능력치, 7 공 도착 시간, 8 난이도, 9 기록 초기화 / 닫기
+## 행: 0~6 능력치, 7 도착 시간, 8 변화 크기, 9 구속 차이 과장, 10 난이도, 11 기록 초기화 / 닫기
 func panel_tap(pos: Vector2) -> void:
 	for i in STAT_ROWS.size():
 		var key: String = STAT_ROWS[i][0]
@@ -388,12 +391,16 @@ func panel_tap(pos: Vector2) -> void:
 	var n := STAT_ROWS.size()
 	if _minus_rect(n).has_point(pos): base_ms = maxf(400.0, base_ms - 50.0)
 	elif _plus_rect(n).has_point(pos): base_ms = minf(1000.0, base_ms + 50.0)
-	var dr := _row_rect(n + 1)
+	if _minus_rect(n + 1).has_point(pos): break_scale = maxf(0.5, break_scale - 0.5)
+	elif _plus_rect(n + 1).has_point(pos): break_scale = minf(4.0, break_scale + 0.5)
+	if _minus_rect(n + 2).has_point(pos): speed_gamma = maxf(1.0, speed_gamma - 0.5)
+	elif _plus_rect(n + 2).has_point(pos): speed_gamma = minf(3.0, speed_gamma + 0.5)
+	var dr := _row_rect(n + 3)
 	var names := ["쉬움", "보통", "어려움"]
 	for k in 3:
 		if Rect2(dr.position + Vector2(300 + k * 130, 0), Vector2(120, 44)).has_point(pos):
 			difficulty = names[k]; base_ms = DIFF_MS[difficulty]
-	var br := _row_rect(n + 2)
+	var br := _row_rect(n + 4)
 	if Rect2(br.position, Vector2(300, 44)).has_point(pos):
 		for k in tally: tally[k] = 0
 	elif Rect2(br.position + Vector2(br.size.x - 200, 0), Vector2(200, 44)).has_point(pos):
@@ -420,16 +427,26 @@ func _draw_panel(font: Font) -> void:
 		_btn(_plus_rect(i), "+10", font)
 	var n := STAT_ROWS.size()
 	var tr := _row_rect(n)
-	draw_string(font, tr.position + Vector2(10, 30), "포심 도착 시간 (구속 50)", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	draw_string(font, tr.position + Vector2(10, 30), "145km/h 도착 시간", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
 	_btn(_minus_rect(n), "−50", font)
 	draw_string(font, tr.position + Vector2(450, 30), "%dms" % roundi(base_ms), HORIZONTAL_ALIGNMENT_CENTER, 130, 24, Color("#ffe066"))
 	_btn(_plus_rect(n), "+50", font)
-	var dr := _row_rect(n + 1)
+	var r1 := _row_rect(n + 1)
+	draw_string(font, r1.position + Vector2(10, 30), "화면 변화 크기 (배율)", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	_btn(_minus_rect(n + 1), "−0.5", font)
+	draw_string(font, r1.position + Vector2(450, 30), "×%.1f" % break_scale, HORIZONTAL_ALIGNMENT_CENTER, 130, 24, Color("#ffe066"))
+	_btn(_plus_rect(n + 1), "+0.5", font)
+	var r2 := _row_rect(n + 2)
+	draw_string(font, r2.position + Vector2(10, 30), "구속 차이 과장 (1 = 그대로)", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	_btn(_minus_rect(n + 2), "−0.5", font)
+	draw_string(font, r2.position + Vector2(450, 30), "×%.1f" % speed_gamma, HORIZONTAL_ALIGNMENT_CENTER, 130, 24, Color("#ffe066"))
+	_btn(_plus_rect(n + 2), "+0.5", font)
+	var dr := _row_rect(n + 3)
 	draw_string(font, dr.position + Vector2(10, 30), "난이도", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
 	var names := ["쉬움", "보통", "어려움"]
 	for k in 3:
 		_btn(Rect2(dr.position + Vector2(300 + k * 130, 0), Vector2(120, 44)), names[k], font, difficulty == names[k])
-	var br := _row_rect(n + 2)
+	var br := _row_rect(n + 4)
 	_btn(Rect2(br.position, Vector2(300, 44)), "기록 초기화", font)
 	_btn(Rect2(br.position + Vector2(br.size.x - 200, 0), Vector2(200, 44)), "닫기", font)
 
@@ -484,7 +501,7 @@ func _draw_flash() -> void:
 
 func _draw_ball(p: float) -> void:
 	var q := persp(p)
-	var pos := RELEASE.lerp(zone_to_screen(flight.zone_pos(p)), q)
+	var pos := flight.screen_pos(p, RELEASE, zone_to_screen, q)
 	var r := lerpf(3.0, 14.0, q)
 	draw_circle(pos, r, Color("#f4f1e8"))
 	draw_spin(self, pos, r, flight.name, float(now() - flight.release_usec) / 1e6)
