@@ -1,6 +1,6 @@
 ## 2단계 확인용 스크린샷 (화면이 있어야 함: 클라우드에서는 xvfb-run).
 ## 실행: xvfb-run -s "-screen 0 1280x720x24" godot --path prototype/batting --script res://tests/screenshot.gd -- <저장 폴더>
-## ① 공이 날아오는 중 ② 투구 뒤 표시 ③ 구종 11개 회전 그림 모음 ④ 배트 스윙 + 맞은 순간 번쩍임
+## ① 공이 날아오는 중 ② 투구 뒤 표시 ③ 구종 11개 회전 그림 모음 ④ 배트 스윙 + 맞은 순간 번쩍임 ⑤ 인플레이 결과(4단계) ⑥ 조절판
 extends SceneTree
 
 const AtBat := preload("res://ui/at_bat.gd")
@@ -8,6 +8,7 @@ const PitchTypes := preload("res://core/pitch_types.gd")
 
 var out := "user://"
 var scene: Node2D
+var sheet_node: Node2D
 var step := 0
 var frames := 0
 
@@ -63,11 +64,35 @@ func _process(_dt: float) -> bool:
 		3:
 			_save("2-2_after_pitch.png")
 			scene.queue_free()
-			var sheet := SpinSheet.new()
-			sheet.t = 0.03
-			root.add_child(sheet)
+			sheet_node = SpinSheet.new()
+			sheet_node.t = 0.03
+			root.add_child(sheet_node)
 		4:
 			_save("2-3_spin_sheet.png")
+			sheet_node.queue_free()
+			scene = load("res://ui/at_bat.tscn").instantiate()
+			root.add_child(scene)
+			scene.fake_now = 0
+			scene._ready()
+			for k in scene.tally: scene.tally[k] = 0
+			scene.tally.merge({"PA": 12, "AB": 10, "H": 3, "2B": 1, "HR": 1, "K": 2, "BB": 2}, true)
+			scene.pitcher.pitches = ["포심", "슬라이더", "체인지업"]
+			scene.throw_pitch("슬라이더", {"x": 0.2, "y": 0.1, "kind": "normal"})
+			scene.fake_now = scene.flight.arrive_usec - 5_000
+			var d := InputEventScreenTouch.new(); d.pressed = true; d.position = Vector2(640, 500)
+			scene._input(d)
+			scene.swing = "당겨치기"; scene.level = 0; scene.swing_result = "strong"; scene.contact = "strong"
+			scene.model.rng.seed = 3
+			scene.fake_now = scene.flight.arrive_usec + 250_000
+			scene.tick()
+			scene.fake_now = scene.show_start + 900_000
+			scene.queue_redraw()
+		5:
+			_save("4-1_in_play.png")
+			scene.panel_open = true
+			scene.queue_redraw()
+		6:
+			_save("4-2_panel.png")
 			quit()
 	step += 1
 	frames = 0
