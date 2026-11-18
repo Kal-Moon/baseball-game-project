@@ -1,0 +1,31 @@
+; 타격 시험판 (docs/game-design.md 4.1절)
+config_version=5
+
+[application]
+
+config/name="Batting Prototype"
+config/features=PackedStringArray("4.7")
+run/main_scene="res://ui/at_bat.tscn"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/handheld/orientation=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[input_devices]
+
+; 데스크톱에서 마우스로 터치 흉내 (시험용)
+pointing/emulate_touch_from_mouse=true
+; 안드로이드: 입력을 프레임 사이에도 여러 번 처리해 터치 시각 오차를 줄임 (4.1절 "터치가 들어온 시각")
+buffering/agile_event_flushing=true
+
+[rendering]
+
+; 안드로이드 내보내기에 필요 (텍스처 압축)
+textures/vram_compression/import_etc2_astc=true
+; 오래된 폰까지 돌게 가벼운 렌더러 (도형만 그리므로 충분)
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

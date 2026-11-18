@@ -1,5 +1,5 @@
 """
-야구 게임 밸런스 시뮬레이터 v0
+야구 게임 밸런스 시뮬레이터 v2 (2026-11-16: 기준값을 KBO 2026에 맞추고 도루·실책·병살·진루타를 넣음)
 - 목적: 능력치 숫자가 야구다운 결과를 내는지, 어떤 능력치가 얼마나 영향을 주는지 확인
 - 능력치 범위: 1~100, 리그 평균 50 (가정)
 - 타석 계산: 3단계 (볼넷·삼진 → 홈런 → 인플레이 타구가 안타가 되는지)
@@ -15,13 +15,28 @@ from dataclasses import dataclass, field
 # 1. 기준 확률과 능력치 영향력 (밸런스 조정은 여기서만 하면 됨)
 # ------------------------------------------------------------
 BASE = {
-    "bb": 0.090,       # 볼넷 / 타석
-    "hbp": 0.012,      # 사구 / 타석
-    "k": 0.180,        # 삼진 / 타석
-    "hr_contact": 0.030,  # 홈런 / 컨택(삼진·볼넷·사구 제외 타석)
-    "babip": 0.305,    # 인플레이 타구 중 안타 비율
-    "double": 0.20,    # 안타 중 2루타 비율
-    "triple": 0.02,    # 안타 중 3루타 비율
+    # v2: KBO 2026 정규시즌 합계 기준 (56,732타석, koreabaseball.com 팀 기록)
+    "bb": 0.0938,      # 볼넷 / 타석 (5,319)
+    "hbp": 0.0148,     # 사구 / 타석 (838)
+    "k": 0.1948,       # 삼진 / 타석 (11,054)
+    "hr_contact": 0.0346,  # 홈런 / 컨택(삼진·볼넷·사구 제외 타석) (1,366 / 39,521)
+    "babip": 0.317,    # 인플레이 타구 중 안타 비율
+    "double": 0.190,   # 홈런 아닌 안타 중 2루타 비율 (2,259 / 11,911)
+    "triple": 0.017,   # 홈런 아닌 안타 중 3루타 비율 (202 / 11,911)
+}
+
+# v2: 득점에 영향을 주는 주루·수비 사건 (팀당 한 경기 목표는 KBO 2026)
+#   도루 시도 0.84 (성공률 74.5%), 실책 0.67, 병살 0.84, 희생플라이 0.30
+#   아래 확률은 그 목표에 맞도록 시뮬레이터에서 조정한 값 (현실에서 직접 잰 값이 아님)
+RUN = {
+    "sb_try": 0.085,     # 1루 주자(2루 빔)가 한 타석 사이에 도루를 시도할 확률 (주루 50 기준)
+    "sb_success": 0.745, # 도루 성공률 (주루 50 기준)
+    "roe": 0.024,        # 인플레이 아웃 타구가 실책으로 출루가 될 확률
+    "gdp": 0.22,         # 1루 주자 + 2아웃 전 인플레이 아웃이 병살이 될 확률
+    "sf": 0.44,          # 3루 주자 + 2아웃 전 인플레이 아웃이 희생플라이(득점)가 될 확률
+    "adv_out": 0.30,     # 인플레이 아웃 때 앞 베이스가 빈 주자가 한 베이스 가는 확률 (진루타)
+    "wp": 0.02,          # 주자가 있을 때 한 타석 사이에 폭투·포일·송구 실책 등으로 주자가 모두 한 베이스 가는 확률
+                         # KBO 폭투 수는 받지 못함 (포일만 0.056/경기). 남은 득점 차이를 맞추는 조정값으로 씀
 }
 
 # 능력치 1 표준편차(10) 차이가 로짓(log-odds)을 얼마나 움직이는지
@@ -215,24 +230,52 @@ def half_inning(bat_team: Team, pit_team: Team, state, stats, rng=random):
     outs, runs = 0, 0
     bases = [None, None, None]
     defense = pit_team.defense()
+    add = lambda k, n=1: stats.__setitem__(k, stats.get(k, 0) + n)
     while outs < 3:
         pitcher = current_pitcher(pit_team, state)
+        # 도루: 1루 주자, 2루 빔
+        r1 = bases[0]
+        if r1 and not bases[1] and rng.random() < RUN["sb_try"] * (1 + (r1.spd - 50) / 50):
+            add("SBA")
+            if rng.random() < min(0.95, RUN["sb_success"] + (r1.spd - 50) / 200):
+                bases = [None, r1, bases[2]]; add("SB")
+            else:
+                bases = [None, None, bases[2]]; outs += 1; add("CS")
+                if outs >= 3:
+                    break
+        # 폭투·포일 등: 주자 모두 한 베이스
+        if any(bases) and rng.random() < RUN["wp"]:
+            add("WP")
+            runs += bases[2] is not None
+            bases = [None, bases[0], bases[1]]
         batter = bat_team.lineup[state["order"][bat_team.name] % 9]
         state["order"][bat_team.name] += 1
         res = plate_appearance(batter, pitcher, defense, rng)
-        stats[res] = stats.get(res, 0) + 1
-        stats["PA"] = stats.get("PA", 0) + 1
+        if res == "OUT" and rng.random() < RUN["roe"]:
+            res = "ROE"
+        add(res); add("PA")
         if res == "K":
             outs += 1
+        elif res == "ROE":
+            # 실책 출루: 타자 1루, 주자 모두 한 베이스씩
+            runs += bases[2] is not None
+            bases = [batter, bases[0], bases[1]]
         elif res == "OUT":
-            # 희생플라이·병살 단순 처리
-            if bases[2] and outs < 2 and rng.random() < 0.35:
-                runs += 1
-                bases[2] = None
-            elif bases[0] and outs < 2 and rng.random() < 0.12:
+            if bases[0] and outs < 2 and rng.random() < RUN["gdp"]:
+                add("DP"); outs += 2
+                bases = [None, bases[1], bases[2]]
+                if outs < 3 and bases[2]:
+                    runs += 1; bases[2] = None
+            else:
                 outs += 1
-                bases[0] = None
-            outs += 1
+                if outs < 3 and bases[2] and outs <= 2 and rng.random() < RUN["sf"]:
+                    runs += 1; bases[2] = None; add("SF")
+                if outs < 3 and rng.random() < RUN["adv_out"]:
+                    # 진루타: 앞이 빈 주자가 한 베이스씩 (3루가 비면 2루 → 3루, 2루가 비면 1루 → 2루)
+                    if bases[1] and not bases[2]:
+                        bases = [bases[0], None, bases[1]]
+                    if bases[0] and not bases[1]:
+                        bases = [None, bases[0], bases[2]]
         else:
             bases, r = advance(bases, res, batter, rng)
             runs += r
@@ -311,14 +354,18 @@ def play_season(teams, games_vs_each=16, rng=random, stats=None):
 def slash(stats):
     pa = stats["PA"]
     hits = sum(stats.get(k, 0) for k in ("1B", "2B", "3B", "HR"))
-    ab = pa - stats.get("BB", 0) - stats.get("HBP", 0)
+    sf = stats.get("SF", 0)
+    ab = pa - stats.get("BB", 0) - stats.get("HBP", 0) - sf
     tb = stats.get("1B", 0) + 2 * stats.get("2B", 0) + 3 * stats.get("3B", 0) + 4 * stats.get("HR", 0)
+    bip = ab - stats.get("K", 0) - stats.get("HR", 0) + sf
     return {
         "AVG": hits / ab,
-        "OBP": (hits + stats.get("BB", 0) + stats.get("HBP", 0)) / pa,
+        "OBP": (hits + stats.get("BB", 0) + stats.get("HBP", 0)) / (ab + stats.get("BB", 0) + stats.get("HBP", 0) + sf),
         "SLG": tb / ab,
+        "BABIP": (hits - stats.get("HR", 0)) / bip,
         "K%": stats.get("K", 0) / pa,
         "BB%": stats.get("BB", 0) / pa,
+        "HBP%": stats.get("HBP", 0) / pa,
         "HR%": stats.get("HR", 0) / pa,
     }
 
@@ -331,7 +378,10 @@ def exp1_league_average(seasons=3, seed=1):
         teams = [make_team(f"T{i}", 50, rng=rng) for i in range(10)]
         play_season(teams, rng=rng, stats=stats)
     s = slash(stats)
-    s["R/G(팀)"] = stats["R"] / stats["G"] / 2
+    tg = stats["G"] * 2
+    s["R/G(팀)"] = stats["R"] / tg
+    for k in ("SBA", "SB", "ROE", "DP", "SF", "WP"):
+        s[k + "/G(팀)"] = stats.get(k, 0) / tg
     return s
 
 
