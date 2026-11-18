@@ -84,8 +84,8 @@ func _sign() -> int:
 	return -1 if rng.randf() < 0.5 else 1
 
 
-## AI 투수의 공 위치. 좌표는 존을 -1~1로 둔 단위, x < 0 이 타자 몸쪽. kind: normal / center(한가운데 실투) / wild(빠진 공)
-func pitch_location(balls: int, strikes: int) -> Dictionary:
+## AI 투수의 공 위치. circle_mult = 구종 등급 원 배율 (2.3절, 3단계). 좌표는 존을 -1~1로 둔 단위, x < 0 이 타자 몸쪽. kind: normal / center(한가운데 실투) / wild(빠진 공)
+func pitch_location(balls: int, strikes: int, circle_mult: float = 1.0) -> Dictionary:
 	var P := Params.P
 	if rng.randf() < miss:
 		if rng.randf() < P["miss_center"]:
@@ -99,7 +99,7 @@ func pitch_location(balls: int, strikes: int) -> Dictionary:
 		ax = _sign() * rng.randf_range(1.15, 1.5); ay = rng.randf_range(-1, 1)
 	else:
 		ax = rng.randf_range(-1, 1); ay = _sign() * rng.randf_range(1.15, 1.5)
-	return {"x": ax + rng.randfn(0, sigma), "y": ay + rng.randfn(0, sigma), "kind": "normal"}
+	return {"x": ax + rng.randfn(0, sigma * circle_mult), "y": ay + rng.randfn(0, sigma * circle_mult), "kind": "normal"}
 
 
 static func in_zone(x: float, y: float) -> bool:

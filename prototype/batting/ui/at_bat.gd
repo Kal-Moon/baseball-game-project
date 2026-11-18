@@ -1,12 +1,14 @@
-## 2단계 타석 화면 (도형). docs/game-design.md 4.1절 표 2단계.
-## 존 테두리, 날아오는 공(원근 + 회전 그림), 스와이프 입력(터치 시각 기준), 투구 뒤 표시.
-## AI 투수(랜덤 투수·볼배합)는 3단계, 결과 판정·조절판은 4단계라 여기서는 구종·코스만 랜덤.
+## 타석 화면 (도형). docs/game-design.md 4.1절 표 2·3단계.
+## 2단계: 존 테두리, 날아오는 공(원근 + 회전 그림), 스와이프 입력(터치 시각 기준), 투구 뒤 표시.
+## 3단계: 타석마다 랜덤 AI 투수, 볼배합(볼카운트별), 볼카운트·삼진·볼넷·사구, 구종 고정 버튼.
+## 안타·아웃 판정 글자와 조절판은 4단계.
 extends Node2D
 
 const Model := preload("res://core/batting_model.gd")
 const PitchTypes := preload("res://core/pitch_types.gd")
 const Flight := preload("res://core/pitch_flight.gd")
 const SwingInput := preload("res://core/swing_input.gd")
+const AiPitcher := preload("res://core/ai_pitcher.gd")
 
 ## 화면 배치 (1280×720 기준)
 const ZONE_C := Vector2(640, 470)
@@ -23,6 +25,16 @@ var state := State.WAIT
 var state_until := 0                    # usec
 var base_ms := 650.0                    # 포심 도착 시간 (조절판은 4단계)
 var right_batter := true
+var pitcher: AiPitcher
+var balls := 0
+var strikes := 0
+var pa_no := 1
+var pa_over := false                    # 이번 공으로 타석이 끝났으면 다음 공 전에 새 투수
+var swing_result := ""                  # 1단계 모델 결과 (whiff / foul / weak / normal / strong)
+var pitch_log: Array = []               # 공마다 기록 (5단계에서 CSV로 저장)
+var pitch_count := "0-0"                # 이 공을 던질 때 볼카운트
+## 구종 고정 버튼 (4.1절 "조절판에서 구종 하나만 던지게 고정". 조절판 전체는 4단계)
+const LOCK_RECT := Rect2(1040, 44, 224, 46)
 
 # 이번 투구의 스윙
 var touch_usec := -1
@@ -47,6 +59,8 @@ func now() -> int:
 
 
 func _ready() -> void:
+	pitcher = AiPitcher.new(model.rng)
+	pitcher.new_pitcher()
 	_enter(State.WAIT, 800)
 
 
@@ -68,14 +82,30 @@ func tick() -> void:
 				_enter(State.WINDUP, 600)
 		State.WINDUP:
 			if t >= state_until:
-				throw_pitch(PitchTypes.NAMES[model.rng.randi_range(0, PitchTypes.NAMES.size() - 1)],
-					model.pitch_location(0, 0))
+				next_pitch()
 		State.FLIGHT:
 			if t >= flight.arrive_usec + int(input.late_cutoff * 1000.0):
 				_finish_pitch()
 		State.SHOW:
 			if t >= state_until:
 				_enter(State.WAIT, 300)
+
+
+## AI 투수가 다음 공을 던짐: 타석이 끝났으면 새 투수, 볼배합으로 구종, 등급 원 배율로 위치
+func next_pitch() -> void:
+	if pa_over:
+		start_new_pa()
+	var p: String = pitcher.choose_pitch(balls, strikes)
+	pitch_count = "%d-%d" % [balls, strikes]
+	throw_pitch(p, model.pitch_location(balls, strikes, pitcher.circle_mult(p)))
+
+
+func start_new_pa() -> void:
+	pa_over = false
+	balls = 0
+	strikes = 0
+	pa_no += 1
+	pitcher.new_pitcher()
 
 
 func throw_pitch(p_name: String, loc: Dictionary) -> void:
@@ -85,6 +115,7 @@ func throw_pitch(p_name: String, loc: Dictionary) -> void:
 	level = null
 	bat_start = -1
 	contact = ""
+	swing_result = ""
 	flash_start = -1
 	state = State.FLIGHT
 
@@ -93,12 +124,20 @@ func throw_pitch(p_name: String, loc: Dictionary) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
+		if event.pressed and LOCK_RECT.has_point(event.position):
+			_cycle_lock()                    # 버튼 누름은 스윙으로 치지 않음
+			return
 		if event.pressed:
 			on_touch_down(event.position, now())
 		else:
 			on_touch_up(event.position)
 	elif event is InputEventScreenDrag:
 		on_drag(event.position)
+
+
+func _cycle_lock() -> void:
+	var opts: Array = [""] + PitchTypes.NAMES
+	pitcher.locked = opts[(opts.find(pitcher.locked) + 1) % opts.size()]
 
 
 func on_touch_down(pos: Vector2, t_usec: int) -> void:
@@ -138,6 +177,7 @@ func _judge_contact() -> void:
 	var zone := Model.in_zone(flight.target.x, flight.target.y)
 	var c := input.compat(flight.target.x, flight.target.y, swing)
 	var res: String = model.resolve_swing(SwingInput.grade(level), zone, flight.kind, c, false)[0]
+	swing_result = res
 	if res != "whiff":
 		contact = res
 		flash_start = maxi(now(), flight.arrive_usec)   # 번쩍임은 공이 배트에 닿는 순간에
@@ -155,15 +195,38 @@ func _finish_pitch() -> void:
 		bat_swing = swing
 		_judge_contact()
 	var pitch_info := "%s %dkm/h" % [flight.name, flight.kmh]
+	var zone := Model.in_zone(flight.target.x, flight.target.y)
+	var call := ""                          # 이 공의 판정
 	if level == null:
-		var zone := Model.in_zone(flight.target.x, flight.target.y)
 		last_text = pitch_info
-		last_sub = "스트라이크" if zone else "볼"
+		if model.is_hbp(flight.target.x):
+			call = "사구"
+		elif zone:
+			call = "스트라이크"; strikes += 1
+		else:
+			call = "볼"; balls += 1
 	else:
 		last_text = "%s · %s" % [SwingInput.TIMING_NAMES[level], pitch_info]
-		var c := input.compat(flight.target.x, flight.target.y, swing)
-		last_sub = "%s (%+d ms)" % [swing, roundi(float(touch_usec - flight.arrive_usec) / 1000.0)]
-		last_sub += ["  궁합 좋음", "", "  반대 스윙"][c]     # 시험판 확인용. 실제 게임은 궁합을 표시하지 않음 (3.1절)
+		match swing_result:
+			"whiff": call = "헛스윙"; strikes += 1
+			"foul": call = "파울"; strikes = mini(2, strikes + 1)
+			_: call = "인플레이"            # 안타·아웃 판정은 4단계
+	var end := ""
+	if call == "사구": end = "몸에 맞는 공"
+	elif call == "인플레이": end = "인플레이 (결과는 4단계)"
+	elif balls >= 4: end = "볼넷"
+	elif strikes >= 3: end = "삼진"
+	last_sub = call
+	if level != null:
+		last_sub += "  ·  %s (%+d ms)" % [swing, roundi(float(touch_usec - flight.arrive_usec) / 1000.0)]
+		last_sub += ["  궁합 좋음", "", "  반대 스윙"][input.compat(flight.target.x, flight.target.y, swing)]   # 시험판 확인용, 실제 게임은 표시 안 함 (3.1절)
+	if end != "":
+		last_sub += "   →  " + end
+		pa_over = true
+	pitch_log.append({"pa": pa_no, "pitcher": "/".join(pitcher.pitches), "pitch": flight.name,
+		"grade": pitcher.grades.get(flight.name, "-"), "count": pitch_count,
+		"x": flight.target.x, "y": flight.target.y, "zone": zone, "kind": flight.kind,
+		"swing": swing, "level": level, "result": swing_result, "call": call, "end": end})
 	_enter(State.SHOW, 1500)
 
 
@@ -213,7 +276,27 @@ func _draw() -> void:
 		draw_string(font, Vector2(0, 85), last_text, HORIZONTAL_ALIGNMENT_CENTER, 1280, 40, Color.WHITE)
 		draw_string(font, Vector2(0, 122), last_sub, HORIZONTAL_ALIGNMENT_CENTER, 1280, 24, Color(1, 1, 1, 0.8))
 	var info := ThemeDB.fallback_font
-	draw_string(info, Vector2(16, 30), "타격 시험판 2단계 · 탭=레벨  위=어퍼  아래=다운  ←=당겨치기  →=밀어치기 (우타자)", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
+	draw_string(info, Vector2(16, 30), "타격 시험판 · 탭=레벨  위=어퍼  아래=다운  ←=당겨치기  →=밀어치기 (우타자)", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, 0.7))
+	_draw_count(info)
+	# 상대 투수 구종 목록 (타석 화면 구석, 2.3절 "쓰임 후보")
+	draw_string(info, Vector2(16, 690), "%d번째 타석 · 상대 투수: %s" % [pa_no, " · ".join(pitcher.pitches)], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(1, 1, 1, 0.85))
+	# 구종 고정 버튼
+	draw_rect(LOCK_RECT, Color(0, 0, 0, 0.45))
+	draw_rect(LOCK_RECT, Color(1, 1, 1, 0.6), false, 1.5)
+	var lock_txt := "구종 고정: " + (pitcher.locked if pitcher.locked != "" else "없음")
+	draw_string(info, LOCK_RECT.position + Vector2(0, 31), lock_txt, HORIZONTAL_ALIGNMENT_CENTER, LOCK_RECT.size.x, 20, Color.WHITE)
+
+
+## 볼카운트: 볼 초록 4칸, 스트라이크 노랑 3칸 (TV 중계처럼)
+func _draw_count(font: Font) -> void:
+	var o := Vector2(24, 70)
+	draw_rect(Rect2(o - Vector2(10, 22), Vector2(150, 70)), Color(0, 0, 0, 0.45))
+	draw_string(font, o + Vector2(0, 2), "B", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	draw_string(font, o + Vector2(0, 36), "S", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+	for i in 3:
+		draw_circle(o + Vector2(36 + i * 28, -6), 9, Color("#3cc35a") if i < balls else Color(1, 1, 1, 0.2))
+	for i in 2:
+		draw_circle(o + Vector2(36 + i * 28, 28), 9, Color("#f2c335") if i < strikes else Color(1, 1, 1, 0.2))
 
 
 ## 배트: 타자 손에서 나와 존을 가로지르는 막대. 스윙 종류마다 높이 변화가 다름.
